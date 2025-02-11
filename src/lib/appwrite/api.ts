@@ -537,3 +537,116 @@ export async function updateUser(user: IUpdateUser) {
     console.log(error);
   }
 }
+
+
+export async function createConversation(participants: string[]) {
+  try {
+    // Check for an existing conversation containing both participants.
+    // This query returns documents where the "participants" array includes both values.
+    const result = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      [
+        Query.equal("participants", participants[0]),
+        Query.equal("participants", participants[1]),
+      ]
+    );
+    
+    // Find a conversation that has exactly the same participants (in any order).
+    const existingConversation = result.documents.find((doc: any) => {
+      const docParticipants: string[] = doc.participants;
+      if (docParticipants.length !== participants.length) return false;
+      return participants.every((p) => docParticipants.includes(p));
+    });
+    
+    if (existingConversation) {
+      // Return the existing conversation without creating a new one.
+      return existingConversation;
+    }
+
+    // If no matching conversation exists, create a new one.
+    const conversation = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      ID.unique(),
+      { 
+        participants, 
+        lastMessage: "", 
+        updatedAt: new Date().toISOString() 
+      }
+    );
+    return conversation;
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+    throw error;
+  }
+}
+
+
+export async function sendMessage(conversationId: string, senderId: string, text: string) {
+  try {
+    const message = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.messagesCollectionId,
+      ID.unique(),
+      { conversationId, senderId, text, createdAt: new Date().toISOString() }
+    );
+
+    // Update the conversation's last message
+    await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      conversationId,
+      { lastMessage: text, updatedAt: new Date().toISOString() }
+    );
+
+    return message;
+  } catch (error) {
+    console.error("Error sending message:", error);
+    throw error;
+  }
+}
+
+export async function getConversations(userId: string) {
+  try {
+    const conversations = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      [Query.contains("participants", userId)] // Query conversations where userId is a participant
+    );
+
+    return conversations;
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    throw error;
+  }
+}
+
+export async function getMessages(conversationId: string) {
+  try {
+    const messages = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.messagesCollectionId,
+      [Query.equal("conversationId", conversationId)]
+    );
+    return messages.documents;
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    throw error;
+  }
+}
+
+export async function getConversationDetails(conversationId: string) {
+  try {
+    const conversation = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      conversationId
+    );
+
+    return conversation; // Returns details of a single conversation
+  } catch (error) {
+    console.error("Error fetching conversation details:", error);
+    throw error;
+  }
+}
