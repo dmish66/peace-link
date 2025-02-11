@@ -538,89 +538,116 @@ export async function updateUser(user: IUpdateUser) {
   }
 }
 
-// ============================================================
-// MESSAGES
-// ============================================================
 
-// ============================== SEND MESSAGE
-export async function sendMessage(senderId: string, receiverId: string, text: string) {
+
+export async function createConversation(participants: string[]) {
   try {
-      const newMessage = await databases.createDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
-          ID.unique(),
-          {
-              senderId,
-              receiverId,
-              text,
-              timestamp: new Date().toISOString(),
-          }
-      );
+    // Check for an existing conversation containing both participants.
+    // This query returns documents where the "participants" array includes both values.
+    const result = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      [
+        Query.equal("participants", participants[0]),
+        Query.equal("participants", participants[1]),
+      ]
+    );
+    
+    // Find a conversation that has exactly the same participants (in any order).
+    const existingConversation = result.documents.find((doc: any) => {
+      const docParticipants: string[] = doc.participants;
+      if (docParticipants.length !== participants.length) return false;
+      return participants.every((p) => docParticipants.includes(p));
+    });
+    
+    if (existingConversation) {
+      // Return the existing conversation without creating a new one.
+      return existingConversation;
+    }
 
-      return newMessage;
+    // If no matching conversation exists, create a new one.
+    const conversation = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      ID.unique(),
+      { 
+        participants, 
+        lastMessage: "", 
+        updatedAt: new Date().toISOString() 
+      }
+    );
+    return conversation;
   } catch (error) {
-      console.error('Error sending message:', error);
-      throw error;
+    console.error("Error creating conversation:", error);
+    throw error;
   }
 }
 
-// ============================== GET MESSAGES BETWEEN TWO USERS
-export async function getMessages(senderId: string, receiverId: string) {
-  try {
-      const messages = await databases.listDocuments(
-          appwriteConfig.databaseId,
-          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
-          [
-              Query.or([
-                  Query.and([Query.equal('senderId', senderId), Query.equal('receiverId', receiverId)]),
-                  Query.and([Query.equal('senderId', receiverId), Query.equal('receiverId', senderId)]),
-              ]),
-              Query.orderAsc('timestamp'), // Sort messages by timestamp
-          ]
-      );
 
-      return messages.documents;
+export async function sendMessage(conversationId: string, senderId: string, text: string) {
+  try {
+    const message = await databases.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.messagesCollectionId,
+      ID.unique(),
+      { conversationId, senderId, text, createdAt: new Date().toISOString() }
+    );
+
+    // Update the conversation's last message
+    await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      conversationId,
+      { lastMessage: text, updatedAt: new Date().toISOString() }
+    );
+
+    return message;
   } catch (error) {
-      console.error('Error fetching messages:', error);
-      throw error;
+    console.error("Error sending message:", error);
+    throw error;
   }
 }
 
-// ============================== DELETE MESSAGE
-export async function deleteMessage(messageId: string) {
+export async function getConversations(userId: string) {
   try {
-      await databases.deleteDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
-          messageId
-      );
+    const conversations = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      [Query.contains("participants", userId)] // Query conversations where userId is a participant
+    );
 
-      return { status: 'ok' };
+    return conversations;
   } catch (error) {
-      console.error('Error deleting message:', error);
-      throw error;
+    console.error("Error fetching conversations:", error);
+    throw error;
   }
 }
 
-// ============================== GET RECENT CONVERSATIONS
-export async function getRecentConversations(userId: string) {
+export async function getMessages(conversationId: string) {
   try {
-      const conversations = await databases.listDocuments(
-          appwriteConfig.databaseId,
-          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
-          [
-              Query.or([
-                  Query.equal('senderId', userId),
-                  Query.equal('receiverId', userId),
-              ]),
-              Query.orderDesc('timestamp'), // Sort by most recent
-              Query.limit(10), // Limit to 10 most recent conversations
-          ]
-      );
-
-      return conversations.documents;
+    const messages = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.messagesCollectionId,
+      [Query.equal("conversationId", conversationId)]
+    );
+    return messages.documents;
   } catch (error) {
-      console.error('Error fetching recent conversations:', error);
-      throw error;
+    console.error("Error fetching messages:", error);
+    throw error;
+  }
+}
+
+export async function getConversationDetails(conversationId: string) {
+  try {
+    const conversation = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      conversationId
+    );
+
+    return conversation; // Returns details of a single conversation
+  } catch (error) {
+    console.error("Error fetching conversation details:", error);
+    throw error;
   }
 }

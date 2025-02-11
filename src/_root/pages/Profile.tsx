@@ -5,6 +5,7 @@ import {
   Outlet,
   useParams,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,8 @@ import { useUserContext } from "@/context/AuthContext";
 import { useGetUserById, useGetCurrentUser } from "@/lib/react-query/queries";
 import Loader from "@/components/shared/Loader";
 import GridPostList from "@/components/shared/GridPostList";
+import { createConversation } from "@/lib/appwrite/api";
 
-
-// ✅ Place this ABOVE the Profile component ✅
 interface StatBlockProps {
   value: string | number;
   label: string;
@@ -60,6 +60,7 @@ const Profile = () => {
   const { id } = useParams();
   const { user } = useUserContext();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const { data: currentUser } = useGetUserById(id || "");
 
@@ -70,14 +71,24 @@ const Profile = () => {
       </div>
     );
 
+  // When Message is clicked, attempt to create (or retrieve) the conversation.
+  // Then redirect to "/messages" with the conversationId (if available).
+  const handleMessageClick = async () => {
+    try {
+      const conversationDoc = await createConversation([user.id, currentUser.$id]);
+      navigate("/messages", { state: { conversationId: conversationDoc.$id } });
+    } catch (error) {
+      console.error("Error creating conversation (possibly already exists):", error);
+      navigate("/messages");
+    }
+  };
+
   return (
     <div className="profile-container">
       <div className="profile-inner_container">
         <div className="flex xl:flex-row flex-col max-xl:items-center flex-1 gap-7">
           <img
-            src={
-              currentUser.imageUrl || "/assets/icons/profile-placeholder.svg"
-            }
+            src={currentUser.imageUrl || "/assets/icons/profile-placeholder.svg"}
             alt="profile"
             className="w-28 h-28 lg:h-36 lg:w-36 rounded-full"
           />
@@ -110,9 +121,18 @@ const Profile = () => {
                 <p className="flex whitespace-nowrap small-medium">Edit Profile</p>
               </Link>
             ) : (
-              <Button type="button" className="shad-button_primary px-8">
-                Follow
-              </Button>
+              <>
+                <Button type="button" className="shad-button_primary px-10">
+                  Follow
+                </Button>
+                <Button
+                  type="button"
+                  className="shad-button_primary px-8"
+                  onClick={handleMessageClick}
+                >
+                  Message
+                </Button>
+              </>
             )}
           </div>
         </div>
