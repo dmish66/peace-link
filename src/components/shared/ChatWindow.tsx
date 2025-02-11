@@ -10,7 +10,7 @@ interface ChatWindowProps {
   profileImage: string;
   name: string;
 }
-
+//changes123
 const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, profileImage, name }) => {
   const { user } = useUserContext();
   const [messages, setMessages] = useState<IMessage[]>([]);
