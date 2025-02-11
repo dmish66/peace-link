@@ -16,8 +16,8 @@ export const sidebarLinks = [
     },
     {
       imgURL: "/assets/icons/bookmark.svg",
-      route: "/messages",
-      label: "Messages",
+      route: "/saved",
+      label: "Saved",
     },
     {
       imgURL: "/assets/icons/gallery-add.svg",
@@ -39,8 +39,8 @@ export const sidebarLinks = [
     },
     {
       imgURL: "/assets/icons/bookmark.svg",
-      route: "/messages",
-      label: "Messages",
+      route: "/saved",
+      label: "Saved",
     },
     {
       imgURL: "/assets/icons/gallery-add.svg",

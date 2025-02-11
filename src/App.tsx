@@ -1,16 +1,23 @@
 import { Routes, Route } from 'react-router-dom';
 
 import {
-    AllUsers,
-    CreatePost,
-    EditPost,
-    Explore,
+  AllUsers,
+  CreatePost,
+  EditPost,
+  Explore,
     Home,
     PostDetails,
     Profile,
     Saved,
     UpdateProfile,
-    Message,
+    /*Explore,
+    Saved,
+    CreatePost,
+    Profile,
+    EditPost,
+    PostDetails,
+    UpdateProfile,
+    AllUsers,*/
   } from "@/_root/pages";
   import AuthLayout from "./_auth/AuthLayout";
   import RootLayout from "./_root/RootLayout";
@@ -41,7 +48,6 @@ function App() {
           <Route path="/posts/:id" element={<PostDetails />} />
           <Route path="/profile/:id/*" element={<Profile />} />
           <Route path="/update-profile/:id" element={<UpdateProfile />} />
-          <Route path="/messages" element={<Message />} />
         </Route>
       </Routes>
 

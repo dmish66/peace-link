@@ -47,33 +47,3 @@ export type INavLink = {
     password: string;
   };
   
-  export type IConversationList = {
-    onSelectConversation: (conversationId: string) => void;
-  };
-  
-  export type IConversation = {
-    $id: string;
-    participants: string[];
-    lastMessage: string;
-  };
-
-  export type IChatWindow = {
-    conversationId: string;
-  };
-
-  export type IMessage = {
-    $id: string;
-    text: string;
-    createdAt: string;
-    senderId: string;
-  };
-
-  export type RouteParams = {
-    conversationId: string;
-  }
-
-  export type IChatHeader = {
-    profileImage: string;
-    name: string;
-    conversationId: string;
-  }
