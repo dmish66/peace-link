@@ -537,3 +537,90 @@ export async function updateUser(user: IUpdateUser) {
     console.log(error);
   }
 }
+
+// ============================================================
+// MESSAGES
+// ============================================================
+
+// ============================== SEND MESSAGE
+export async function sendMessage(senderId: string, receiverId: string, text: string) {
+  try {
+      const newMessage = await databases.createDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
+          ID.unique(),
+          {
+              senderId,
+              receiverId,
+              text,
+              timestamp: new Date().toISOString(),
+          }
+      );
+
+      return newMessage;
+  } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+  }
+}
+
+// ============================== GET MESSAGES BETWEEN TWO USERS
+export async function getMessages(senderId: string, receiverId: string) {
+  try {
+      const messages = await databases.listDocuments(
+          appwriteConfig.databaseId,
+          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
+          [
+              Query.or([
+                  Query.and([Query.equal('senderId', senderId), Query.equal('receiverId', receiverId)]),
+                  Query.and([Query.equal('senderId', receiverId), Query.equal('receiverId', senderId)]),
+              ]),
+              Query.orderAsc('timestamp'), // Sort messages by timestamp
+          ]
+      );
+
+      return messages.documents;
+  } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
+  }
+}
+
+// ============================== DELETE MESSAGE
+export async function deleteMessage(messageId: string) {
+  try {
+      await databases.deleteDocument(
+          appwriteConfig.databaseId,
+          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
+          messageId
+      );
+
+      return { status: 'ok' };
+  } catch (error) {
+      console.error('Error deleting message:', error);
+      throw error;
+  }
+}
+
+// ============================== GET RECENT CONVERSATIONS
+export async function getRecentConversations(userId: string) {
+  try {
+      const conversations = await databases.listDocuments(
+          appwriteConfig.databaseId,
+          appwriteConfig.messagesCollectionId, // Replace with your messages collection ID
+          [
+              Query.or([
+                  Query.equal('senderId', userId),
+                  Query.equal('receiverId', userId),
+              ]),
+              Query.orderDesc('timestamp'), // Sort by most recent
+              Query.limit(10), // Limit to 10 most recent conversations
+          ]
+      );
+
+      return conversations.documents;
+  } catch (error) {
+      console.error('Error fetching recent conversations:', error);
+      throw error;
+  }
+}

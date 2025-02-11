@@ -1,5 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
-
+import { Routes, Route } from 'react-router-dom'; 
 import {
   AllUsers,
   CreatePost,
@@ -26,6 +25,7 @@ import {
   import { Toaster } from "@/components/ui/toaster";
 
 import './globals.css';
+import TabMessages from './_root/pages/TabMessages';
 
 function App() {
     return (
@@ -44,6 +44,7 @@ function App() {
           <Route path="/saved" element={<Saved />} />
           <Route path="/all-users" element={<AllUsers/>} />
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/messages" element={<TabMessages />} />
           <Route path="/update-post/:id" element={<EditPost />} />
           <Route path="/posts/:id" element={<PostDetails />} />
           <Route path="/profile/:id/*" element={<Profile />} />
@@ -51,8 +52,8 @@ function App() {
         </Route>
       </Routes>
 
-
       <Toaster />
+
     </main>
     );
 }
