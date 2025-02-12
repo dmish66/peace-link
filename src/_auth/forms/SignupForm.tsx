@@ -10,8 +10,21 @@ import Loader from "@/components/shared/Loader";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queries";
-import { SignupValidation } from "@/lib/validation";
 import { useUserContext } from "@/context/AuthContext";
+
+// Nationalities List
+const nationalities = ["United Kingdom", "Bulgaria", "Germany", "Russia"];
+
+// Signup Form Validation Schema
+export const SignupValidation = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  username: z.string().min(2, { message: "Username must be at least 2 characters." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
+  nationality: z.enum(nationalities as [string, ...string[]], {
+    required_error: "Please select your nationality.",
+  }),
+});
 
 const SignupForm = () => {
   const { toast } = useToast();
@@ -25,21 +38,21 @@ const SignupForm = () => {
       username: "",
       email: "",
       password: "",
+      nationality: "United Kingdom", // Default nationality
     },
   });
 
-  // Queries
+  // Queries for user creation and sign-in
   const { mutateAsync: createUserAccount, isPending: isCreatingAccount } = useCreateUserAccount();
   const { mutateAsync: signInAccount, isPending: isSigningInUser } = useSignInAccount();
 
-  // Handler
+  // Handle form submission
   const handleSignup = async (user: z.infer<typeof SignupValidation>) => {
     try {
       const newUser = await createUserAccount(user);
 
       if (!newUser) {
-        toast({ title: "Sign up failed. Please try again.", });
-        
+        toast({ title: "Sign up failed. Please try again." });
         return;
       }
 
@@ -49,10 +62,8 @@ const SignupForm = () => {
       });
 
       if (!session) {
-        toast({ title: "Something went wrong. Please login your new account", });
-        
+        toast({ title: "Something went wrong. Please login your new account" });
         navigate("/sign-in");
-        
         return;
       }
 
@@ -60,15 +71,12 @@ const SignupForm = () => {
 
       if (isLoggedIn) {
         form.reset();
-
         navigate("/");
       } else {
-        toast({ title: "Login failed. Please try again.", });
-        
-        return;
+        toast({ title: "Login failed. Please try again." });
       }
     } catch (error) {
-      console.log({ error });
+      console.error(error);
     }
   };
 
@@ -86,78 +94,72 @@ const SignupForm = () => {
 
         <form
           onSubmit={form.handleSubmit(handleSignup)}
-          className="flex flex-col gap-5 w-full mt-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="shad-form_label">Name</FormLabel>
-                <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          className="flex flex-col gap-5 w-full mt-4"
+        >
+          {/* Name Input */}
+          <FormField control={form.control} name="name" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="shad-form_label">Name</FormLabel>
+              <FormControl><Input type="text" className="shad-input" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="shad-form_label">Username</FormLabel>
-                <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Username Input */}
+          <FormField control={form.control} name="username" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="shad-form_label">Username</FormLabel>
+              <FormControl><Input type="text" className="shad-input" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="shad-form_label">Email</FormLabel>
-                <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Email Input */}
+          <FormField control={form.control} name="email" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="shad-form_label">Email</FormLabel>
+              <FormControl><Input type="email" className="shad-input" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="shad-form_label">Password</FormLabel>
-                <FormControl>
-                  <Input type="password" className="shad-input" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Password Input */}
+          <FormField control={form.control} name="password" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="shad-form_label">Password</FormLabel>
+              <FormControl><Input type="password" className="shad-input" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
 
+          {/* Nationality Dropdown (With Bigger Padding) */}
+          <FormField control={form.control} name="nationality" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="shad-label px-1 py-1">Country</FormLabel>
+              <FormControl>
+                <select className="shad-input px-2 py-1" {...field}>
+                  {nationalities.map((country) => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          {/* Submit Button */}
           <Button type="submit" className="shad-button_primary">
             {isCreatingAccount || isSigningInUser || isUserLoading ? (
-              <div className="flex-center gap-2">
-                <Loader /> Loading...
-              </div>
+              <div className="flex-center gap-2"><Loader /> Loading...</div>
             ) : (
               "Sign Up"
             )}
           </Button>
 
+          {/* Redirect to Login */}
           <p className="text-small-regular text-light-2 text-center mt-2">
             Already have an account?
-            <Link
-              to="/sign-in"
-              className="text-primary-500 text-small-semibold ml-1">
+            <Link to="/sign-in" className="text-primary-500 text-small-semibold ml-1">
               Log in
             </Link>
           </p>

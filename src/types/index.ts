@@ -37,7 +37,7 @@ export type INavLink = {
     username: string;
     email: string;
     imageUrl: string;
-    bio: string;
+    nationality: string; 
   };
   
   export type INewUser = {
@@ -45,6 +45,7 @@ export type INavLink = {
     email: string;
     username: string;
     password: string;
+    nationality: string; 
   };
   
   export type IConversationList = {
