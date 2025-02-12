@@ -107,7 +107,7 @@ const Profile = () => {
             </div>
 
             <p className="small-medium md:base-medium text-center xl:text-left mt-7 max-w-screen-sm">
-              {currentUser.bio}
+              {currentUser.nationality}
             </p>
           </div>
 

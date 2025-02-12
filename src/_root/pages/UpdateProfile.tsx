@@ -14,7 +14,6 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
-import {Textarea} from "@/components/ui/textarea";
 import Loader from "@/components/shared/Loader";
 import ProfileUploader from "@/components/shared/ProfileUploader";
 
@@ -35,7 +34,7 @@ const UpdateProfile = () => {
       name: user.name,
       username: user.username,
       email: user.email,
-      bio: user.bio || "",
+      nationality: user.nationality || "",
     },
   });
 
@@ -56,7 +55,7 @@ const UpdateProfile = () => {
     const updatedUser = await updateUser({
       userId: currentUser.$id,
       name: value.name,
-      bio: value.bio,
+      nationality: value.nationality,
       file: value.file,
       imageUrl: currentUser.imageUrl,
       imageId: currentUser.imageId,
@@ -71,7 +70,7 @@ const UpdateProfile = () => {
     setUser({
       ...user,
       name: updatedUser?.name,
-      bio: updatedUser?.bio,
+      nationality: updatedUser?.nationality,
       imageUrl: updatedUser?.imageUrl,
     });
     return navigate(`/profile/${id}`);
@@ -159,23 +158,6 @@ const UpdateProfile = () => {
                     />
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="shad-form_label">Bio</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className="shad-textarea custom-scrollbar"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="shad-form_message" />
                 </FormItem>
               )}
             />
