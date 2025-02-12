@@ -651,3 +651,33 @@ export async function getConversationDetails(conversationId: string) {
     throw error;
   }
 }
+
+
+export const getOtherUserDetails = async (conversationId: string, currentUserId: string) => {
+  try {
+    // Get the conversation document to obtain the participants
+    const conversation = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.conversationsCollectionId,
+      conversationId
+    );
+    // Find the other user's ID
+    const otherUserId = conversation.participants.find((id: string) => id !== currentUserId);
+    if (!otherUserId) {
+      throw new Error("Other user not found in conversation.");
+    }
+    // Get the other user's details (assume the image URL is stored as imageUrl)
+    const otherUserDetails = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.userCollectionId,
+      otherUserId
+    );
+    return {
+      username: otherUserDetails.username,
+      profileImage: otherUserDetails.imageUrl, // Use imageUrl property
+    };
+  } catch (error) {
+    console.error("Error fetching other user details:", error);
+    throw error;
+  }
+};

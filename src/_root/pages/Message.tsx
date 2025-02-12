@@ -2,42 +2,39 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import ConversationList from "@/components/shared/ConversationList";
 import ChatWindow from "@/components/shared/ChatWindow";
-import { getConversationDetails } from "@/lib/appwrite/api"; // Updated API call
+import { getOtherUserDetails } from "@/lib/appwrite/api"; // Updated API call
 import { useUserContext } from "@/context/AuthContext";
 
 const Message = () => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [profileImage, setProfileImage] = useState<string>("");
-  const [name, setName] = useState<string>("");
+  const [profileImage, setProfileImage] = useState<string>("/assets/icons/profile-placeholder.svg");
+  const [username, setUsername] = useState<string>("Unknown");
   const location = useLocation();
   const { user } = useUserContext();
 
+  // Fetch the other user's details when a conversation is selected
   useEffect(() => {
-    const fetchConversationDetails = async () => {
+    const fetchOtherUser = async () => {
       if (selectedConversation) {
         try {
-          const conversationDetails = await getConversationDetails(selectedConversation);
-          
-          if (conversationDetails && conversationDetails.participants) {
-            const otherUser = conversationDetails.participants.find(
-              (participant: any) => participant.$id !== user.id
-            );
-
-            if (otherUser) {
-              setProfileImage(otherUser.imageUrl || "/assets/icons/profile-placeholder.svg");
-              setName(otherUser.name || otherUser.username || "Unknown");
-            }
-          }
+          const details = await getOtherUserDetails(selectedConversation, user.id);
+          setProfileImage(details.profileImage || "/assets/icons/profile-placeholder.svg");
+          setUsername(details.username || "Unknown");
         } catch (error) {
-          console.error("Error fetching conversation details:", error);
+          console.error("Error fetching other user details:", error);
+          setProfileImage("/assets/icons/profile-placeholder.svg");
+          setUsername("Unknown");
         }
+      } else {
+        setProfileImage("/assets/icons/profile-placeholder.svg");
+        setUsername("Unknown");
       }
     };
 
-    fetchConversationDetails();
+    fetchOtherUser();
   }, [selectedConversation, user.id]);
 
-  // Pre-select conversation if passed via location
+  // Pre-select conversation if passed via location state.
   useEffect(() => {
     if (location.state && (location.state as any).conversationId) {
       setSelectedConversation((location.state as any).conversationId);
@@ -54,7 +51,7 @@ const Message = () => {
           <ChatWindow
             conversationId={selectedConversation}
             profileImage={profileImage}
-            name={name}
+            username={username}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
