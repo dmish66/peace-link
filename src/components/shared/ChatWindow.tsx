@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
 import { getMessages, sendMessage } from "@/lib/appwrite/api";
 import { Models } from "appwrite";
-import { IMessage } from "@/types";
+import { IMessage, IChatWindow } from "@/types";
 import { useUserContext } from "@/context/AuthContext";
 import ChatHeader from "./ChatHeader";
 
-interface ChatWindowProps {
-  conversationId: string;
-  profileImage: string;
-  name: string;
-}
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, profileImage, name }) => {
+const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, username }) => {
   const { user } = useUserContext();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>("");
@@ -48,8 +43,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, profileImage, n
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
-      <ChatHeader profileImage={profileImage} name={name} conversationId={conversationId} />
+      {/* Chat Header */}
+      <ChatHeader profileImage={profileImage} username={username} />
 
+      {/* Messages Section */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.map((message) => (
           <div
@@ -72,10 +69,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, profileImage, n
         ))}
       </div>
 
-      <form
-        onSubmit={handleSendMessage}
-        className="flex gap-4 p-4 border-t border-gray-700"
-      >
+      {/* Input Field */}
+      <form onSubmit={handleSendMessage} className="flex gap-4 p-4 border-t border-gray-700">
         <input
           type="text"
           value={newMessage}
