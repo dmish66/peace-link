@@ -60,6 +60,8 @@ export type INavLink = {
 
   export type IChatWindow = {
     conversationId: string;
+    profileImage: string;
+    username: string;
   };
 
   export type IMessage = {
@@ -76,5 +78,4 @@ export type INavLink = {
   export type IChatHeader = {
     profileImage: string;
     name: string;
-    conversationId: string;
   }
