@@ -1,6 +1,5 @@
 import { Routes, Route } from 'react-router-dom'; 
 import {
-  AllUsers,
   CreatePost,
   EditPost,
   Explore,
@@ -10,14 +9,8 @@ import {
     Profile,
     Saved,
     UpdateProfile,
-    /*Explore,
-    Saved,
-    CreatePost,
-    Profile,
-    EditPost,
-    PostDetails,
-    UpdateProfile,
-    AllUsers,*/
+    Forum,
+    CreateForum,
   } from "@/_root/pages";
   import AuthLayout from "./_auth/AuthLayout";
   import RootLayout from "./_root/RootLayout";
@@ -42,7 +35,8 @@ function App() {
           <Route index element={<Home />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/saved" element={<Saved />} />
-          <Route path="/all-users" element={<AllUsers/>} />
+          <Route path="/forums" element={<Forum/>} />
+          <Route path="/create-forum" element={<CreateForum/>} />
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/messages" element={<Message />} />
           <Route path="/update-post/:id" element={<EditPost />} />

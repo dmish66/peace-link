@@ -11,15 +11,9 @@ export const sidebarLinks = [
     },
     {
       imgURL: "/assets/icons/people.svg",
-      route: "/all-users",
-      label: "People",
+      route: "/forums",
+      label: "Forums",
     },
-    /*{
-      imgURL: "/assets/icons/bookmark.svg",
-      route: "/saved",
-      label: "Saved",
-    },
-    */
     {
       imgURL: "/assets/icons/gallery-add.svg",
       route: "/create-post",
@@ -45,8 +39,8 @@ export const sidebarLinks = [
     },
     {
       imgURL: "/assets/icons/bookmark.svg",
-      route: "/saved",
-      label: "Saved",
+      route: "/messages",
+      label: "Messages",
     },
     {
       imgURL: "/assets/icons/gallery-add.svg",

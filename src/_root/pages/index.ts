@@ -9,3 +9,5 @@ export { default as PostDetails } from './PostDetails';
 export { default as AllUsers } from './AllUsers';   
 export { default as LikedPosts } from './LikedPosts';
 export { default as Message } from './Message';
+export { default as Forum } from './Forum';
+export { default as CreateForum } from './CreateForum';
