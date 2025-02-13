@@ -591,7 +591,7 @@ export async function sendMessage(conversationId: string, senderId: string, text
   try {
     const message = await databases.createDocument(
       appwriteConfig.databaseId,
-      appwriteConfig.messagesCollectionId,
+      appwriteConfig.text_messagesCollectionId,
       ID.unique(),
       { conversationId, senderId, text, createdAt: new Date().toISOString() }
     );
@@ -630,7 +630,7 @@ export async function getMessages(conversationId: string) {
   try {
     const messages = await databases.listDocuments(
       appwriteConfig.databaseId,
-      appwriteConfig.messagesCollectionId,
+      appwriteConfig.text_messagesCollectionId,
       [Query.equal("conversationId", conversationId)]
     );
     return messages.documents;
@@ -683,4 +683,68 @@ export const getOtherUserDetails = async (conversationId: string, currentUserId:
     console.error("Error fetching other user details:", error);
     throw error;
   }
+};
+
+
+// Create a new forum
+export const createForum = async (
+  title: string,
+  description: string,
+  theme: string,
+  createdBy: string
+) => {
+  const allowedThemes = [
+    "Refugee crises",
+    "Cultural conflicts",
+    "Social problems",
+    "International relations",
+  ];
+
+  if (!allowedThemes.includes(theme)) {
+    throw new Error("Invalid theme selected.");
+  }
+
+  return await databases.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.forumsCollectionId,
+    ID.unique(), 
+    {
+      title,
+      description,
+      theme,
+      createdBy,
+      createdAt: new Date().toISOString(),
+  });
+};
+
+// Get all forums
+export const getForums = async () => {
+  return await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.forumsCollectionId
+  );
+};
+
+// Get messages for a specific forum
+export const getForumMessages = async (forumId: string) => {
+  return await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.forums_messagesCollectionId, 
+    [
+    Query.equal("forumId", [forumId]),
+  ]);
+};
+
+// Post a message in a forum
+export const postMessage = async (forumId: string, text: string, senderId: string) => {
+  return await databases.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.forums_messagesCollectionId,
+    ID.unique(), 
+    {
+      forumId,
+      text,
+      senderId,
+      createdAt: new Date().toISOString(),
+  });
 };

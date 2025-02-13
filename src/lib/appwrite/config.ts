@@ -9,7 +9,9 @@ export const appwriteConfig = {
   postCollectionId: import.meta.env.VITE_APPWRITE_POST_COLLECTION_ID,
   savesCollectionId: import.meta.env.VITE_APPWRITE_SAVES_COLLECTION_ID,
   conversationsCollectionId: import.meta.env.VITE_APPWRITE_CONVERSATIONS_COLLECTION_ID,
-  messagesCollectionId: import.meta.env.VITE_APPWRITE_MESSAGES_COLLECTION_ID
+  text_messagesCollectionId: import.meta.env.VITE_APPWRITE_T_MESSAGES_COLLECTION_ID,
+  forumsCollectionId: import.meta.env.VITE_APPWRITE_FORUMS_COLLECTION_ID,
+  forums_messagesCollectionId: import.meta.env.VITE_APPWRITE_F_MESSAGES_COLLECTION_ID
 };
 
 export const client = new Client();
