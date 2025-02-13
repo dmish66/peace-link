@@ -132,12 +132,12 @@ const SignupForm = () => {
             </FormItem>
           )} />
 
-          {/* Nationality Dropdown (With Bigger Padding) */}
+          {/* Nationality Dropdown */}
           <FormField control={form.control} name="nationality" render={({ field }) => (
             <FormItem>
-              <FormLabel className="shad-label px-1 py-1">Country</FormLabel>
+              <FormLabel className="shad-form_label">Country</FormLabel>
               <FormControl>
-                <select className="shad-input px-2 py-1" {...field}>
+                <select className="shad-input" {...field}>
                   {nationalities.map((country) => (
                     <option key={country} value={country}>{country}</option>
                   ))}
