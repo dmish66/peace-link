@@ -79,3 +79,10 @@ export type INavLink = {
     profileImage: string;
     name: string;
   }
+
+  export type IForumItem = {
+    id: string;
+    title: string;
+    description: string;
+    theme: string;
+  }

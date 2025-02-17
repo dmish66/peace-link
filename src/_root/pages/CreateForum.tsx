@@ -1,11 +1,11 @@
-import CreateForum from "@/components/forms/ForumForm";
+import ForumForm from "@/components/shared/ForumForm";
 
-const CreateForumPage = () => {
+const CreateForum = () => {
   return (
-    <div className="min-h-screen bg-gray-900 text-white container mx-auto p-6">
-      <CreateForum />
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <ForumForm />
     </div>
   );
 };
 
-export default CreateForumPage;
+export default CreateForum;

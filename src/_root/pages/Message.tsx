@@ -42,7 +42,7 @@ const Message = () => {
   }, [location.state]);
 
   return (
-    <div className="flex h-screen w-full bg-gray-900">
+    <div className="flex h-screen w-full bg-gray-900 overflow-scroll custom-scrollbar">
       <div className="w-1/4 border-r border-gray-700 p-6">
         <ConversationList onSelectConversation={setSelectedConversation} />
       </div>

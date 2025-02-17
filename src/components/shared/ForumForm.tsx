@@ -18,7 +18,7 @@ const ForumForm = () => {
 
     try {
       await createForum(title, description, theme, user.id);
-      navigate("/forums"); // Redirect to the forum list after creation
+      navigate("/forums");
     } catch (error) {
       console.error("Error creating forum:", error);
       alert("Failed to create forum. Please try again.");
@@ -26,29 +26,31 @@ const ForumForm = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Create a New Forum</h1>
-
-      <div className="space-y-4">
+    <div className="min-h-screen bg-gray-900 text-white container mx-auto p-6">
+      <h1 className="text-4xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+        Create a New Forum
+      </h1>
+      <div className="max-w-2xl mx-auto space-y-6">
         <input
           type="text"
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 bg-gray-700 rounded"
+          className="w-full p-4 bg-gray-800 rounded-xl border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all"
         />
         <textarea
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2 bg-gray-700 rounded"
+          className="w-full p-4 bg-gray-800 rounded-xl border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all"
+          rows={5}
         />
         <div className="flex flex-col gap-2">
-          <label className="text-gray-300">Select Theme:</label>
+          <label className="text-gray-400 font-medium">Select Theme:</label>
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
-            className="w-full p-2 bg-gray-700 rounded"
+            className="w-full p-4 bg-gray-800 rounded-xl border border-gray-700 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 transition-all"
           >
             <option value="" disabled>
               Choose a theme
@@ -61,7 +63,7 @@ const ForumForm = () => {
         </div>
         <button
           onClick={handleCreateForum}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         >
           Create Forum
         </button>

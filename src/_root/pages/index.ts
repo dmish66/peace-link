@@ -11,3 +11,4 @@ export { default as LikedPosts } from './LikedPosts';
 export { default as Message } from './Message';
 export { default as Forum } from './Forum';
 export { default as CreateForum } from './CreateForum';
+export { default as ForumChat } from './ForumChat';

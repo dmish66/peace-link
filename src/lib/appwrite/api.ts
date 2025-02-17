@@ -736,15 +736,31 @@ export const getForumMessages = async (forumId: string) => {
 };
 
 // Post a message in a forum
-export const postMessage = async (forumId: string, text: string, senderId: string) => {
+export const postMessage = async (forumId: string, text: string, senderId: string, username: string) => {
   return await databases.createDocument(
     appwriteConfig.databaseId,
     appwriteConfig.forums_messagesCollectionId,
-    ID.unique(), 
+    ID.unique(),
     {
       forumId,
       text,
       senderId,
+      username,
       createdAt: new Date().toISOString(),
-  });
+    }
+  );
+};
+
+export const getForumDetails = async (forumId: string) => {
+  try {
+    const response = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.forumsCollectionId,
+      forumId
+    );
+    return response;
+  } catch (error) {
+    console.error("Error fetching forum details:", error);
+    throw error;
+  }
 };

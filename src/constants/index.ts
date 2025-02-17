@@ -20,7 +20,7 @@ export const sidebarLinks = [
       label: "Create Post",
     },
     {
-      imgURL: "/assets/icons/gallery-add.svg",
+      imgURL: "/assets/icons/chat.svg",
       route: "/messages", 
       label: "Messages",
     }
@@ -38,7 +38,7 @@ export const sidebarLinks = [
       label: "Explore",
     },
     {
-      imgURL: "/assets/icons/bookmark.svg",
+      imgURL: "/assets/icons/chat.svg",
       route: "/messages",
       label: "Messages",
     },
