@@ -116,6 +116,18 @@ export async function signOutAccount() {
   }
 }
 
+
+export const forgotPassword = async (email: string) => {
+  // Replace with your actual redirect URL after password reset
+  const redirectUrl = "http://localhost:5173/reset-password";
+  try {
+    return await account.createRecovery(email, redirectUrl);
+  } catch (error) {
+    console.error("Error in forgotPassword:", error);
+    throw error;
+  }
+};
+
 // ============================================================
 // POSTS
 // ============================================================
