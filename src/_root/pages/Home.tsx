@@ -1,15 +1,14 @@
 import { Models } from "appwrite";
-
-// import { useToast } from "@/components/ui/use-toast";
 import Loader from "@/components/shared/Loader";
 import PostCard from "@/components/shared/PostCard";
 import UserCard from "@/components/shared/UserCard";
-
 import { useGetRecentPosts, useGetUsers } from "@/lib/react-query/queries";
 
-const Home = () => {
-  // const { toast } = useToast();
+type HomeProps = {
+  selectedCountry?: string; // Pass the selected country as a prop
+};
 
+const Home = ({ selectedCountry }: HomeProps) => {
   const {
     data: posts,
     isPending: isPostLoading,
@@ -34,6 +33,11 @@ const Home = () => {
     );
   }
 
+  // Filter posts based on the selected country
+  const filteredPosts = selectedCountry
+    ? posts?.documents.filter((post: Models.Document) => post.location === selectedCountry)
+    : posts?.documents;
+
   return (
     <div className="flex flex-1">
       <div className="home-container">
@@ -43,7 +47,7 @@ const Home = () => {
             <Loader />
           ) : (
             <ul className="flex flex-col flex-1 gap-9 w-full ">
-              {posts?.documents.map((post: Models.Document) => (
+              {filteredPosts?.map((post: Models.Document) => (
                 <li key={post.$id} className="flex justify-center w-full">
                   <PostCard post={post} />
                 </li>

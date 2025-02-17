@@ -678,6 +678,7 @@ export const getOtherUserDetails = async (conversationId: string, currentUserId:
     return {
       username: otherUserDetails.username,
       profileImage: otherUserDetails.imageUrl, // Use imageUrl property
+      nationality: otherUserDetails.nationality,
     };
   } catch (error) {
     console.error("Error fetching other user details:", error);
