@@ -3,12 +3,14 @@ import Loader from "@/components/shared/Loader";
 import PostCard from "@/components/shared/PostCard";
 import UserCard from "@/components/shared/UserCard";
 import { useGetRecentPosts, useGetUsers } from "@/lib/react-query/queries";
+import { useUserContext } from "@/context/AuthContext";
 
 type HomeProps = {
   selectedCountry?: string; // Pass the selected country as a prop
 };
 
 const Home = ({ selectedCountry }: HomeProps) => {
+  const { user: currentUser } = useUserContext();
   const {
     data: posts,
     isPending: isPostLoading,
@@ -19,6 +21,10 @@ const Home = ({ selectedCountry }: HomeProps) => {
     isPending: isUserLoading,
     isError: isErrorCreators,
   } = useGetUsers(10);
+
+  const filteredCreators = creators?.documents.filter(
+    (creator: Models.Document) => creator.$id !== currentUser.id
+  );
 
   if (isErrorPosts || isErrorCreators) {
     return (
@@ -58,12 +64,12 @@ const Home = ({ selectedCountry }: HomeProps) => {
       </div>
 
       <div className="home-creators">
-        <h3 className="h3-bold text-light-1">Top Creators</h3>
+        <h3 className="h3-bold text-light-1">Recommended Users</h3>
         {isUserLoading && !creators ? (
           <Loader />
         ) : (
           <ul className="grid 2xl:grid-cols-2 gap-6">
-            {creators?.documents.map((creator) => (
+            {filteredCreators?.map((creator) => (
               <li key={creator?.$id}>
                 <UserCard user={creator} />
               </li>

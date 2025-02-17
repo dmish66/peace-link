@@ -777,3 +777,69 @@ export const getForumDetails = async (forumId: string) => {
     throw error;
   }
 };
+
+
+
+export const followUser = async (currentUserId: string, targetUserId: string) => {
+  try {
+    const currentUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId);
+    const targetUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId);
+
+    const updatedFollowing = [...new Set([...currentUserDoc.following, targetUserId])];
+
+    const updatedFollowers = [...new Set([...targetUserDoc.followers, currentUserId])];
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId, {
+      following: updatedFollowing,
+    });
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId, {
+      followers: updatedFollowers,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error following user:", error);
+    return false;
+  }
+};
+
+
+export const unfollowUser = async (currentUserId: string, targetUserId: string) => {
+  try {
+    const currentUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId);
+    const targetUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId);
+
+    const updatedFollowing = currentUserDoc.following.filter((id: string) => id !== targetUserId);
+
+    const updatedFollowers = targetUserDoc.followers.filter((id: string) => id !== currentUserId);
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId, {
+      following: updatedFollowing,
+    });
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId, {
+      followers: updatedFollowers,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error unfollowing user:", error);
+    return false;
+  }
+};
+
+
+
+export const getFollowStats = async (userId: string) => {
+  try {
+    const userDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, userId);
+    return {
+      followers: userDoc.followers.length,
+      following: userDoc.following.length,
+    };
+  } catch (error) {
+    console.error("Error fetching follow stats:", error);
+    return { followers: 0, following: 0 };
+  }
+};

@@ -37,7 +37,9 @@ export type INavLink = {
     username: string;
     email: string;
     imageUrl: string;
-    nationality: string; 
+    nationality: string;
+    followers: string[];
+    following: string[];
   };
   
   export type INewUser = {
