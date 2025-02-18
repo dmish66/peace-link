@@ -230,7 +230,7 @@ const Profile = () => {
 
       <Routes>
         <Route index element={<GridPostList posts={currentUser.posts} showUser={false} />} />
-        <Route path="/liked-posts" element={<LikedPosts />} />
+        <Route path="/liked-posts" element={<LikedPosts userId={currentUser.$id} />} />
         {currentUser.$id === contextUser.id && <Route path="/saved-posts" element={<SavedPosts />} />}
       </Routes>
       <Outlet />
