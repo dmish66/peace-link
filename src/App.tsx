@@ -17,6 +17,8 @@ import {
   import RootLayout from "./_root/RootLayout";
   import SignupForm from "@/_auth/forms/SignupForm";
   import SigninForm from "@/_auth/forms/SigninForm";
+  import ForgotPassword from "@/_auth/forms/ForgotPassword";
+  import ResetPassword from "@/_auth/forms/ResetPassword";
   import { Toaster } from "@/components/ui/toaster";
 
 import './globals.css';
@@ -28,6 +30,8 @@ function App() {
         {/* public routes */}
         <Route element={<AuthLayout />}>
           <Route path="/sign-in" element={<SigninForm />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/sign-up" element={<SignupForm />} />
         </Route>
 
