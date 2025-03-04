@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useInView } from "react-intersection-observer";
-
 import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/useDebounce";
 import Loader from "@/components/shared/Loader";
 import GridPostList from "@/components/shared/GridPostList";
 import { useGetPosts, useSearchPosts } from "@/lib/react-query/queries";
-
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -38,12 +36,12 @@ const SearchResults = ({ isSearchFetching, searchedPosts }: SearchResultProps) =
 const Explore = () => {
   const { ref, inView } = useInView();
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
-
   const [searchValue, setSearchValue] = useState("");
   const debouncedSearch = useDebounce(searchValue, 500);
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch);
-
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const countryInfoRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (inView && !searchValue) {
@@ -51,18 +49,30 @@ const Explore = () => {
     }
   }, [inView, searchValue]);
 
-  if (!posts)
+  useEffect(() => {
+    if (selectedCountry && countryInfoRef.current && containerRef.current) {
+      const container = containerRef.current;
+      const infoElement = countryInfoRef.current;
+      const scrollPosition = infoElement.offsetTop - container.offsetTop - 20;
+      
+      container.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+      });
+    }
+  }, [selectedCountry]);
+
+  if (!posts) {
     return (
       <div className="flex-center w-full h-full">
         <Loader />
       </div>
     );
+  }
 
   const shouldShowSearchResults = searchValue !== "";
-  const shouldShowPosts =
-    !shouldShowSearchResults && posts.pages.every((item) => item.documents.length === 0);
+  const shouldShowPosts = !shouldShowSearchResults && posts.pages.every((item) => item.documents.length === 0);
 
-  // Country information
   const countryData: Record<
     string,
     { name: string; capital: string; population: string; language: string; currency: string; famousFor: string }
@@ -94,7 +104,11 @@ const Explore = () => {
   };
 
   return (
-    <div className="explore-container" style={{ overflowY: "auto", minHeight: selectedCountry ? "130vh" : "100vh" }}>
+    <div 
+      ref={containerRef}
+      className="explore-container" 
+      style={{ overflowY: "auto", minHeight: selectedCountry ? "130vh" : "100vh" }}
+    >
       <div className="explore-inner_container">
         <h2 className="h3-bold md:h2-bold w-full">Search Posts</h2>
         <div className="flex gap-1 px-4 w-full rounded-lg bg-dark-4">
@@ -133,7 +147,6 @@ const Explore = () => {
         </div>
       )}
 
-      {/* Interactive Map */}
       <div style={{ marginTop: "40px", height: "700px", width: "100%" }}>
         <div style={{ textAlign: "center" }}>
           <h3 className="h3-bold md:h2-bold w-full">Map of the World</h3>
@@ -141,34 +154,52 @@ const Explore = () => {
         <MapContainer center={[54.526, 15.2551]} zoom={5} style={{ height: "500px", width: "100%" }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
 
-          {/* Germany Marker */}
           <Marker position={[51.1657, 10.4515]}>
             <Popup>
               <strong>Germany</strong>
               <br />
-              <a href="#" onClick={() => setSelectedCountry("Germany")} style={{ color: "blue", textDecoration: "underline" }}>
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedCountry("Germany");
+                }} 
+                style={{ color: "blue", textDecoration: "underline" }}
+              >
                 Click Here for More Information
               </a>
             </Popup>
           </Marker>
 
-          {/* Bulgaria Marker */}
           <Marker position={[42.7339, 25.4858]}>
             <Popup>
               <strong>Bulgaria</strong>
               <br />
-              <a href="#" onClick={() => setSelectedCountry("Bulgaria")} style={{ color: "blue", textDecoration: "underline" }}>
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedCountry("Bulgaria");
+                }} 
+                style={{ color: "blue", textDecoration: "underline" }}
+              >
                 Click Here for More Information
               </a>
             </Popup>
           </Marker>
 
-          {/* UK Marker */}
           <Marker position={[55.3781, -3.4360]}>
             <Popup>
               <strong>United Kingdom</strong>
               <br />
-              <a href="#" onClick={() => setSelectedCountry("UK")} style={{ color: "blue", textDecoration: "underline" }}>
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedCountry("UK");
+                }} 
+                style={{ color: "blue", textDecoration: "underline" }}
+              >
                 Click Here for More Information
               </a>
             </Popup>
@@ -176,9 +207,12 @@ const Explore = () => {
         </MapContainer>
       </div>
 
-      {/* Country Info */}
       {selectedCountry && countryData[selectedCountry] && (
-        <div className="country-info" style={{ marginTop: "20px", padding: "20px", backgroundColor: "#1e1e1e", color: "#fff", borderRadius: "10px" }}>
+        <div 
+          ref={countryInfoRef}
+          className="country-info" 
+          style={{ marginTop: "20px", padding: "20px", backgroundColor: "#1e1e1e", color: "#fff", borderRadius: "10px" }}
+        >
           <h2>{countryData[selectedCountry].name}</h2>
           <p><strong>Capital:</strong> {countryData[selectedCountry].capital}</p>
           <p><strong>Population:</strong> {countryData[selectedCountry].population}</p>
