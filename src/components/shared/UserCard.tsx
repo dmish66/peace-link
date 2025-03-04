@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Models } from "appwrite";
 import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,25 +17,45 @@ const UserCard = ({ user }: UserCardProps) => {
   const { user: currentUser } = useUserContext();
   const { data: loggedInUser } = useGetCurrentUser();
 
-  const isFollowing = currentUser?.following?.includes(user.$id) ?? false;
+  // Local state for instant UI update
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  // Sync initial follow state when user data is available
+  useEffect(() => {
+    if (currentUser?.following?.includes(user.$id)) {
+      setIsFollowing(true);
+    }
+  }, [currentUser, user.$id]);
 
   const followMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!loggedInUser?.$id) throw new Error("User not logged in");
       return followUser(loggedInUser.$id, user.$id);
     },
+    onMutate: () => {
+      setIsFollowing(true); // Optimistically update state
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: () => {
+      setIsFollowing(false); // Revert on error
     },
   });
 
   const unfollowMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!loggedInUser?.$id) throw new Error("User not logged in");
       return unfollowUser(loggedInUser.$id, user.$id);
     },
+    onMutate: () => {
+      setIsFollowing(false); // Optimistically update state
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: () => {
+      setIsFollowing(true); // Revert on error
     },
   });
 
@@ -42,7 +63,12 @@ const UserCard = ({ user }: UserCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     if (!loggedInUser) return;
-    isFollowing ? unfollowMutation.mutate() : followMutation.mutate();
+
+    if (isFollowing) {
+      unfollowMutation.mutate();
+    } else {
+      followMutation.mutate();
+    }
   };
 
   return (

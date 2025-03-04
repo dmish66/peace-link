@@ -4,26 +4,35 @@ import { Models } from "appwrite";
 import { IMessage, IChatWindow } from "@/types";
 import { useUserContext } from "@/context/AuthContext";
 import ChatHeader from "./ChatHeader";
-
+import { translateText } from "@/lib/translate";
+import { client, appwriteConfig } from "@/lib/appwrite/config";
 
 const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, username }) => {
   const { user } = useUserContext();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>("");
+  const [translatedMessages, setTranslatedMessages] = useState<IMessage[] | null>(null);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    await sendMessage(conversationId, user.id, newMessage);
+    const tempId = Date.now().toString(); // Temporary ID for optimistic update
     setMessages((prev) => [
       ...prev,
       {
-        $id: Date.now().toString(),
+        $id: tempId,
         text: newMessage,
         createdAt: new Date().toISOString(),
         senderId: user.id,
       },
     ]);
     setNewMessage("");
+    
+    try {
+      await sendMessage(conversationId, user.id, newMessage);
+    } catch (error) {
+      // Remove optimistic update if send fails
+      setMessages(prev => prev.filter(msg => msg.$id !== tempId));
+    }
   };
 
   useEffect(() => {
@@ -41,23 +50,79 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
     fetchMessages();
   }, [conversationId]);
 
+
+  useEffect(() => {
+    // Subscribe to real-time updates
+    const unsubscribe = client.subscribe(
+      `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents`,
+      (response) => {
+        // Handle new message creation events
+        if (response.events.includes(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents.*.create`)) {
+          const newMessage = response.payload as Models.Document;
+          
+          // Check if the message belongs to the current conversation
+          if (newMessage.conversationId === conversationId) {
+            // Check if message already exists in state
+            const messageExists = messages.some(msg => msg.$id === newMessage.$id);
+            
+            if (!messageExists) {
+              setMessages(prev => [
+                ...prev,
+                {
+                  $id: newMessage.$id,
+                  text: newMessage.text,
+                  createdAt: newMessage.createdAt,
+                  senderId: newMessage.senderId,
+                }
+              ]);
+            }
+          }
+        }
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, [conversationId, messages]);
+  
+
+  const handleTranslate = async () => {
+    if (!user.nationality) return;
+  
+    const translated = await Promise.all(
+      messages.map(async (message) => ({
+        ...message,
+        text: await translateText(message.text, user.nationality),
+      }))
+    );
+    setTranslatedMessages(translated);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
       {/* Chat Header */}
       <ChatHeader profileImage={profileImage} username={username} />
 
+      {/* Translate Button */}
+      <button
+        onClick={handleTranslate}
+        className="m-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+      >
+        Translate Messages
+      </button>
+
       {/* Messages Section */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {messages.map((message) => (
+        {(translatedMessages || messages).map((message) => (
           <div
             key={message.$id}
             className={`flex ${message.senderId === user.id ? "justify-end" : "justify-start"}`}
           >
             <div
               className={`p-4 rounded-xl shadow-md break-words max-w-xs ${
-                message.senderId === user.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-100"
+                message.senderId === user.id ? "bg-blue-600 text-white" : "bg-gray-800 text-gray-100"
               }`}
             >
               <p className="text-base">{message.text}</p>

@@ -17,7 +17,7 @@ import Loader from "@/components/shared/Loader";
 import GridPostList from "@/components/shared/GridPostList";
 import { createConversation } from "@/lib/appwrite/api";
 import { followUser, unfollowUser } from "@/lib/appwrite/api";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 interface StatBlockProps {
   value: string | number;
@@ -69,6 +69,8 @@ const Profile = () => {
   const { data: currentUser } = useGetUserById(id || "");
   const { data: loggedInUser } = useGetCurrentUser();
 
+  const [isFollowing, setIsFollowing] = useState(false);
+
   useEffect(() => {
     if (loggedInUser) {
       const userData: IUser = {
@@ -85,7 +87,13 @@ const Profile = () => {
     }
   }, [loggedInUser, setUser]);
 
-  const isFollowing = contextUser?.following?.includes(currentUser?.$id || "") ?? false;
+  useEffect(() => {
+    if (contextUser?.following?.includes(currentUser?.$id || "")) {
+      setIsFollowing(true);
+    } else {
+      setIsFollowing(false);
+    }
+  }, [contextUser, currentUser]);
 
   const followMutation = useMutation({
     mutationFn: () => {
@@ -94,9 +102,15 @@ const Profile = () => {
       }
       return followUser(loggedInUser.$id, currentUser.$id);
     },
+    onMutate: () => {
+      setIsFollowing(true); // Optimistically update state
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userById", id] });
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: () => {
+      setIsFollowing(false); // Revert state if API call fails
     },
   });
 
@@ -107,9 +121,15 @@ const Profile = () => {
       }
       return unfollowUser(loggedInUser.$id, currentUser.$id);
     },
+    onMutate: () => {
+      setIsFollowing(false); // Optimistically update state
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userById", id] });
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: () => {
+      setIsFollowing(true); // Revert state if API call fails
     },
   });
 
