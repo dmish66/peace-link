@@ -845,5 +845,17 @@ export const getFollowStats = async (userId: string) => {
 };
 
 
-
+export const getSingleMessage = async (messageId: string) => {
+  try {
+    const message = await databases.getDocument(
+      appwriteConfig.databaseId, // Your database ID
+      appwriteConfig.text_messagesCollectionId, // Your messages collection ID
+      messageId // The ID of the message to fetch
+    );
+    return message;
+  } catch (error) {
+    console.error("Error fetching single message:", error);
+    throw error;
+  }
+};
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMessages, sendMessage } from "@/lib/appwrite/api";
+import { getMessages, sendMessage, getSingleMessage } from "@/lib/appwrite/api"; // Import getSingleMessage
 import { Models } from "appwrite";
 import { IMessage, IChatWindow } from "@/types";
 import { useUserContext } from "@/context/AuthContext";
@@ -13,84 +13,98 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
   const [newMessage, setNewMessage] = useState<string>("");
   const [translatedMessages, setTranslatedMessages] = useState<IMessage[] | null>(null);
 
+  // ✅ Optimistic UI Update on Send
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const tempId = Date.now().toString(); // Temporary ID for optimistic update
-    setMessages((prev) => [
-      ...prev,
-      {
-        $id: tempId,
-        text: newMessage,
-        createdAt: new Date().toISOString(),
-        senderId: user.id,
-      },
-    ]);
-    setNewMessage("");
-    
+  
+    const tempMessage: IMessage = {
+      $id: tempId,
+      text: newMessage,
+      createdAt: new Date().toISOString(),
+      senderId: user.id,
+    };
+  
+    setMessages((prev) => [...prev, tempMessage]); // ✅ Optimistic UI update
+  
+    setNewMessage(""); // Clear input
+  
     try {
-      await sendMessage(conversationId, user.id, newMessage);
+      const sentMessage = await sendMessage(conversationId, user.id, newMessage);
+      
+      const newMessageFormatted: IMessage = {
+        $id: sentMessage.$id,
+        text: sentMessage.text,
+        createdAt: sentMessage.createdAt || new Date().toISOString(),
+        senderId: sentMessage.senderId,
+      };
+  
+      setMessages((prev) =>
+        prev.map((msg) => (msg.$id === tempId ? newMessageFormatted : msg))
+      );
     } catch (error) {
-      // Remove optimistic update if send fails
-      setMessages(prev => prev.filter(msg => msg.$id !== tempId));
+      console.error("Error sending message:", error);
+      setMessages((prev) => prev.filter((msg) => msg.$id !== tempId));
     }
   };
+  
 
   useEffect(() => {
     const fetchMessages = async () => {
       const data: Models.Document[] = await getMessages(conversationId);
-      const mapped: IMessage[] = data.map((doc) => ({
+      const mappedMessages: IMessage[] = data.map((doc) => ({
         $id: doc.$id,
         text: doc.text,
-        createdAt: doc.createdAt,
+        createdAt: doc.createdAt || new Date().toISOString(),
         senderId: doc.senderId,
       }));
-      setMessages(mapped);
+      setMessages(mappedMessages);
     };
-
+  
     fetchMessages();
   }, [conversationId]);
+  
 
-
+  // ✅ Real-Time Subscription Fix
   useEffect(() => {
-    // Subscribe to real-time updates
     const unsubscribe = client.subscribe(
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents`,
-      (response) => {
-        // Handle new message creation events
+      async (response) => {
         if (response.events.includes(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents.*.create`)) {
-          const newMessage = response.payload as Models.Document;
-          
-          // Check if the message belongs to the current conversation
-          if (newMessage.conversationId === conversationId) {
-            // Check if message already exists in state
-            const messageExists = messages.some(msg => msg.$id === newMessage.$id);
-            
-            if (!messageExists) {
-              setMessages(prev => [
-                ...prev,
-                {
-                  $id: newMessage.$id,
-                  text: newMessage.text,
-                  createdAt: newMessage.createdAt,
-                  senderId: newMessage.senderId,
-                }
-              ]);
-            }
+          const newMessageId = (response.payload as Models.Document).$id; // ✅ Type assertion
+  
+          try {
+            const fullMessage = await getSingleMessage(newMessageId);
+  
+            const formattedMessage: IMessage = {
+              $id: fullMessage.$id,
+              text: fullMessage.text,
+              createdAt: fullMessage.createdAt || new Date().toISOString(),
+              senderId: fullMessage.senderId,
+            };
+  
+            // ✅ Avoid duplicates before adding to state
+            setMessages((prev) => {
+              if (!prev.some(msg => msg.$id === formattedMessage.$id)) {
+                return [...prev, formattedMessage];
+              }
+              return prev;
+            });
+  
+          } catch (error) {
+            console.error("Error fetching full message:", error);
           }
         }
       }
     );
-
-    // Cleanup subscription on unmount
-    return () => {
-      unsubscribe();
-    };
-  }, [conversationId, messages]);
   
-
+    return () => unsubscribe();
+  }, [conversationId]);
+  
+  // ✅ Translation Function
   const handleTranslate = async () => {
     if (!user.nationality) return;
-  
+
     const translated = await Promise.all(
       messages.map(async (message) => ({
         ...message,
