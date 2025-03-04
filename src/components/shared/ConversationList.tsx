@@ -29,6 +29,8 @@ const ConversationList = ({ onSelectConversation }: IConversationList) => {
             email: doc.email ?? "No email",
             imageUrl: doc.imageUrl ?? "",
             nationality: doc.nationality ?? "",
+            followers: doc.followers ?? [],
+            following: doc.following ?? [],
           }))
           .filter((userItem) => userItem.id !== user.id);
         setUsers(mappedUsers);
