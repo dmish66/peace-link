@@ -1,5 +1,6 @@
 {
   "name": "blagoevgrad",
+  "homepage": "https://dmish66.github.io/peace-link/",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +8,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@google-cloud/translate": "^8.5.0",
@@ -22,6 +25,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "create-vite": "^6.1.1",
+    "gh-pages": "^6.3.0",
     "i18next": "^24.2.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.474.0",
