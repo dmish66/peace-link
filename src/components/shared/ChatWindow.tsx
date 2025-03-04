@@ -1,54 +1,52 @@
 import { useEffect, useState } from "react";
-import { getMessages, sendMessage, getSingleMessage } from "@/lib/appwrite/api"; // Import getSingleMessage
+import { getMessages, sendMessage, getSingleMessage } from "@/lib/appwrite/api";
 import { Models } from "appwrite";
 import { IMessage, IChatWindow } from "@/types";
 import { useUserContext } from "@/context/AuthContext";
 import ChatHeader from "./ChatHeader";
-import { translateText } from "@/lib/translate";
 import { client, appwriteConfig } from "@/lib/appwrite/config";
 
 const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, username }) => {
   const { user } = useUserContext();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>("");
-  const [translatedMessages, setTranslatedMessages] = useState<IMessage[] | null>(null);
 
-  // ✅ Optimistic UI Update on Send
+  // ✅ Optimistic UI Update
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tempId = Date.now().toString(); // Temporary ID for optimistic update
-  
+    const tempId = Date.now().toString(); // Temporary ID
+
     const tempMessage: IMessage = {
       $id: tempId,
       text: newMessage,
       createdAt: new Date().toISOString(),
       senderId: user.id,
     };
-  
-    setMessages((prev) => [...prev, tempMessage]); // ✅ Optimistic UI update
-  
-    setNewMessage(""); // Clear input
-  
+
+    setMessages((prev) => [...prev, tempMessage]); // ✅ Optimistic update
+    setNewMessage(""); // Clear input field
+
     try {
       const sentMessage = await sendMessage(conversationId, user.id, newMessage);
-      
+
       const newMessageFormatted: IMessage = {
         $id: sentMessage.$id,
         text: sentMessage.text,
         createdAt: sentMessage.createdAt || new Date().toISOString(),
         senderId: sentMessage.senderId,
       };
-  
+
+      // ✅ Ensure the message replaces the temp message
       setMessages((prev) =>
         prev.map((msg) => (msg.$id === tempId ? newMessageFormatted : msg))
       );
     } catch (error) {
       console.error("Error sending message:", error);
-      setMessages((prev) => prev.filter((msg) => msg.$id !== tempId));
+      setMessages((prev) => prev.filter((msg) => msg.$id !== tempId)); // ❌ Remove temp message on failure
     }
   };
-  
 
+  // ✅ Fetch Messages Once When Component Mounts
   useEffect(() => {
     const fetchMessages = async () => {
       const data: Models.Document[] = await getMessages(conversationId);
@@ -60,76 +58,57 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       }));
       setMessages(mappedMessages);
     };
-  
+
     fetchMessages();
   }, [conversationId]);
-  
 
-  // ✅ Real-Time Subscription Fix
+  // ✅ Real-Time Subscription (Fix for Only Updating Once)
   useEffect(() => {
     const unsubscribe = client.subscribe(
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents`,
       async (response) => {
-        if (response.events.includes(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents.*.create`)) {
-          const newMessageId = (response.payload as Models.Document).$id; // ✅ Type assertion
-  
+        if (
+          response.events.includes(
+            `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents.*.create`
+          )
+        ) {
+          const newMessageId = (response.payload as Models.Document).$id;
+
           try {
             const fullMessage = await getSingleMessage(newMessageId);
-  
+
             const formattedMessage: IMessage = {
               $id: fullMessage.$id,
               text: fullMessage.text,
               createdAt: fullMessage.createdAt || new Date().toISOString(),
               senderId: fullMessage.senderId,
             };
-  
-            // ✅ Avoid duplicates before adding to state
-            setMessages((prev) => {
-              if (!prev.some(msg => msg.$id === formattedMessage.$id)) {
-                return [...prev, formattedMessage];
+
+            // ✅ FUNCTIONAL STATE UPDATE (Ensures it Always Uses the Latest Messages)
+            setMessages((prevMessages) => {
+              if (!prevMessages.some((msg) => msg.$id === formattedMessage.$id)) {
+                return [...prevMessages, formattedMessage]; // ✅ Adds New Message
               }
-              return prev;
+              return prevMessages; // ✅ Prevents Duplicates
             });
-  
           } catch (error) {
             console.error("Error fetching full message:", error);
           }
         }
       }
     );
-  
-    return () => unsubscribe();
-  }, [conversationId]);
-  
-  // ✅ Translation Function
-  const handleTranslate = async () => {
-    if (!user.nationality) return;
 
-    const translated = await Promise.all(
-      messages.map(async (message) => ({
-        ...message,
-        text: await translateText(message.text, user.nationality),
-      }))
-    );
-    setTranslatedMessages(translated);
-  };
+    return () => unsubscribe(); // Cleanup subscription on unmount
+  }, [conversationId]); // ✅ No `messages` dependency to prevent unnecessary re-renders
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
       {/* Chat Header */}
       <ChatHeader profileImage={profileImage} username={username} />
 
-      {/* Translate Button */}
-      <button
-        onClick={handleTranslate}
-        className="m-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-      >
-        Translate Messages
-      </button>
-
       {/* Messages Section */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {(translatedMessages || messages).map((message) => (
+        {messages.map((message) => (
           <div
             key={message.$id}
             className={`flex ${message.senderId === user.id ? "justify-end" : "justify-start"}`}
