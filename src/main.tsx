@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { QueryProvider } from './lib/react-query/QueryProvider';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <BrowserRouter basename="/peace-link">
+    <BrowserRouter>
         <QueryProvider>
             <AuthProvider>
                 <App />

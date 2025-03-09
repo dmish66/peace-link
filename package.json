@@ -1,6 +1,5 @@
 {
   "name": "blagoevgrad",
-  "homepage": "https://dmish66.github.io/peace-link/",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -29,8 +28,8 @@
     "i18next": "^24.2.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.474.0",
-    "react": "^19.0.0-rc.1",
-    "react-dom": "^19.0.0-rc.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
     "react-hook-form": "^7.54.2",
     "react-i18next": "^15.4.0",
