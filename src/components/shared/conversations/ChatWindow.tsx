@@ -35,6 +35,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       text: newMessage,
       createdAt: new Date().toISOString(),
       senderId: user.id,
+      conversationId: conversationId,
     };
 
     setMessages((prev) => [...prev, tempMessage]); // ✅ Optimistic UI update
@@ -49,6 +50,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
         text: sentMessage.text,
         createdAt: sentMessage.createdAt || new Date().toISOString(),
         senderId: sentMessage.senderId,
+        conversationId: sentMessage.conversationId,
       };
 
       setMessages((prev) =>
@@ -70,6 +72,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
         text: doc.text,
         createdAt: doc.createdAt || new Date().toISOString(),
         senderId: doc.senderId,
+        conversationId: doc.conversationId,
       }));
       setMessages(mappedMessages);
       scrollToBottom(); // ✅ Scroll after fetching messages
@@ -89,6 +92,9 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
           )
         ) {
           const payload = response.payload as Models.Document;
+
+          if (payload.conversationId !== conversationId) return;
+
           if (payload.senderId === user.id) return; // ✅ Skip if message is from current user
 
           try {
@@ -98,6 +104,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
               text: fullMessage.text,
               createdAt: fullMessage.createdAt || new Date().toISOString(),
               senderId: fullMessage.senderId,
+              conversationId: fullMessage.conversationId,
             };
 
             setMessages((prevMessages) => {

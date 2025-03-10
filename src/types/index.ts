@@ -71,6 +71,7 @@ export type INavLink = {
     text: string;
     createdAt: string;
     senderId: string;
+    conversationId: string,
   };
 
   export type RouteParams = {
