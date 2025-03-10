@@ -1,47 +1,37 @@
-import { Routes, Route } from 'react-router-dom'; 
+import { Routes, Route } from "react-router-dom"; 
 import {
-  CreatePost,
-  EditPost,
-  Explore,
-    Home,
-    Message,
-    PostDetails,
-    Profile,
-    Saved,
-    UpdateProfile,
-    Forum,
-    CreateForum,
-    ForumChat,
-  } from "@/_root/pages";
-  import AuthLayout from "./_auth/AuthLayout";
-  import RootLayout from "./_root/RootLayout";
-  import SignupForm from "@/_auth/forms/SignupForm";
-  import SigninForm from "@/_auth/forms/SigninForm";
-  import ForgotPassword from "@/_auth/forms/ForgotPassword";
-  import ResetPassword from "@/_auth/forms/ResetPassword";
-  import { Toaster } from "@/components/ui/toaster";
+  CreatePost, EditPost, Explore, Home, Message, PostDetails, Profile, Saved,
+  UpdateProfile, Forum, CreateForum, ForumChat
+} from "@/_root/pages";
+import AuthLayout from "./_auth/AuthLayout";
+import RootLayout from "./_root/RootLayout";
+import SignupForm from "@/_auth/forms/SignupForm";
+import SigninForm from "@/_auth/forms/SigninForm";
+import ForgotPassword from "@/_auth/forms/ForgotPassword";
+import ResetPassword from "@/_auth/forms/ResetPassword";
+import { Toaster } from "@/components/ui/toaster";
 
-import './globals.css';
+import "./globals.css";
 
 function App() {
-    return (
-        <main className="flex h-screen">
+  return (
+    <main className="flex h-screen">
       <Routes>
-        {/* public routes */}
+        {/* Public Routes (Accessible without login) */}
         <Route element={<AuthLayout />}>
           <Route path="/sign-in" element={<SigninForm />} />
+          <Route path="/sign-up" element={<SignupForm />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/sign-up" element={<SignupForm />} />
         </Route>
 
-        {/* private routes */}
+        {/* Private Routes (Require Authentication) */}
         <Route element={<RootLayout />}>
           <Route index element={<Home />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/saved" element={<Saved />} />
-          <Route path="/forums" element={<Forum/>} />
-          <Route path="/create-forum" element={<CreateForum/>} />
+          <Route path="/forums" element={<Forum />} />
+          <Route path="/create-forum" element={<CreateForum />} />
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/messages" element={<Message />} />
           <Route path="/update-post/:id" element={<EditPost />} />
@@ -53,9 +43,8 @@ function App() {
       </Routes>
 
       <Toaster />
-
     </main>
-    );
+  );
 }
 
-export default App
+export default App;

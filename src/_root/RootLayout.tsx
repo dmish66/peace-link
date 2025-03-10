@@ -1,11 +1,16 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
+import { useUserContext } from "@/context/AuthContext";
 
 import Topbar from "@/components/shared/home/Topbar";
 import Bottombar from "@/components/shared/home/Bottombar";
 import LeftSidebar from "@/components/shared/home/LeftSidebar";
 
 const RootLayout = () => {
-  return (
+  const { isAuthenticated, isLoading } = useUserContext();
+
+  if (isLoading) return <p>Loading...</p>; // Optional loading state
+
+  return isAuthenticated ? (
     <div className="w-full md:flex">
       <Topbar />
       <LeftSidebar />
@@ -16,6 +21,8 @@ const RootLayout = () => {
 
       <Bottombar />
     </div>
+  ) : (
+    <Navigate to="/sign-in" replace />
   );
 };
 
