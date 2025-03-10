@@ -49,7 +49,7 @@ const SavedPosts = () => {
       : [];
 
   return (
-    <div className="saved-container">
+    <div className="grid-container">
       {savePosts.length === 0 ? (
         <p className="text-light-4">No saved posts</p>
       ) : (

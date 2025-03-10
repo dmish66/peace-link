@@ -146,7 +146,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       {/* Translate Button */}
       <button
         onClick={handleTranslate}
-        className="mx-4 mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        className="mx-4 my-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
       >
         Translate Messages
       </button>
