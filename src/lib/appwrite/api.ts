@@ -554,11 +554,81 @@ export async function updateUser(user: IUpdateUser) {
 }
 
 
+// ============================== FOLLOW USER
+export const followUser = async (currentUserId: string, targetUserId: string) => {
+  try {
+    const currentUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId);
+    const targetUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId);
 
+    const updatedFollowing = [...new Set([...currentUserDoc.following, targetUserId])];
+
+    const updatedFollowers = [...new Set([...targetUserDoc.followers, currentUserId])];
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId, {
+      following: updatedFollowing,
+    });
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId, {
+      followers: updatedFollowers,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error following user:", error);
+    return false;
+  }
+};
+
+
+// ============================== UNFOLLOW USER
+export const unfollowUser = async (currentUserId: string, targetUserId: string) => {
+  try {
+    const currentUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId);
+    const targetUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId);
+
+    const updatedFollowing = currentUserDoc.following.filter((id: string) => id !== targetUserId);
+
+    const updatedFollowers = targetUserDoc.followers.filter((id: string) => id !== currentUserId);
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId, {
+      following: updatedFollowing,
+    });
+
+    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId, {
+      followers: updatedFollowers,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error unfollowing user:", error);
+    return false;
+  }
+};
+
+
+// ============================== GET FOLLOWER AND FOLLOWING COUNT
+export const getFollowStats = async (userId: string) => {
+  try {
+    const userDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, userId);
+    return {
+      followers: userDoc.followers.length,
+      following: userDoc.following.length,
+    };
+  } catch (error) {
+    console.error("Error fetching follow stats:", error);
+    return { followers: 0, following: 0 };
+  }
+};
+
+
+// ============================================================
+// CONVERSATION
+// ============================================================
+
+
+// ============================== CREATE CONVERSATION
 export async function createConversation(participants: string[]) {
   try {
-    // Check for an existing conversation containing both participants.
-    // This query returns documents where the "participants" array includes both values.
     const result = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.conversationsCollectionId,
@@ -568,7 +638,6 @@ export async function createConversation(participants: string[]) {
       ]
     );
     
-    // Find a conversation that has exactly the same participants (in any order).
     const existingConversation = result.documents.find((doc: any) => {
       const docParticipants: string[] = doc.participants;
       if (docParticipants.length !== participants.length) return false;
@@ -576,11 +645,9 @@ export async function createConversation(participants: string[]) {
     });
     
     if (existingConversation) {
-      // Return the existing conversation without creating a new one.
       return existingConversation;
     }
 
-    // If no matching conversation exists, create a new one.
     const conversation = await databases.createDocument(
       appwriteConfig.databaseId,
       appwriteConfig.conversationsCollectionId,
@@ -599,6 +666,7 @@ export async function createConversation(participants: string[]) {
 }
 
 
+// ============================== SEND MESSAGE
 export async function sendMessage(conversationId: string, senderId: string, text: string) {
   try {
     const message = await databases.createDocument(
@@ -623,6 +691,8 @@ export async function sendMessage(conversationId: string, senderId: string, text
   }
 }
 
+
+// ============================== GET CONVERSATIONS
 export async function getConversations(userId: string) {
   try {
     const conversations = await databases.listDocuments(
@@ -638,6 +708,8 @@ export async function getConversations(userId: string) {
   }
 }
 
+
+// ============================== GET MESSAGES
 export async function getMessages(conversationId: string) {
   try {
     const messages = await databases.listDocuments(
@@ -652,6 +724,8 @@ export async function getMessages(conversationId: string) {
   }
 }
 
+
+// ============================== GET CONVERSATION DETAILS
 export async function getConversationDetails(conversationId: string) {
   try {
     const conversation = await databases.getDocument(
@@ -660,7 +734,7 @@ export async function getConversationDetails(conversationId: string) {
       conversationId
     );
 
-    return conversation; // Returns details of a single conversation
+    return conversation; 
   } catch (error) {
     console.error("Error fetching conversation details:", error);
     throw error;
@@ -668,6 +742,7 @@ export async function getConversationDetails(conversationId: string) {
 }
 
 
+// ============================== GET THE USERNAME AND IMAGE OF THE OTHER USER OF THE CONVERSATION
 export const getOtherUserDetails = async (conversationId: string, currentUserId: string) => {
   try {
     // Get the conversation document to obtain the participants
@@ -699,7 +774,27 @@ export const getOtherUserDetails = async (conversationId: string, currentUserId:
 };
 
 
-// Create a new forum
+// ============================== GET LAST MESSAGE OF CONVERSATION
+export const getSingleMessage = async (messageId: string) => {
+  try {
+    const message = await databases.getDocument(
+      appwriteConfig.databaseId, // Your database ID
+      appwriteConfig.text_messagesCollectionId, // Your messages collection ID
+      messageId // The ID of the message to fetch
+    );
+    return message;
+  } catch (error) {
+    console.error("Error fetching single message:", error);
+    throw error;
+  }
+};
+
+// ============================================================
+// FORUM
+// ============================================================
+
+
+// ============================== CREATE FORUM
 export const createForum = async (
   title: string,
   description: string,
@@ -730,7 +825,8 @@ export const createForum = async (
   });
 };
 
-// Get all forums
+
+// ============================== GET FORUMS
 export const getForums = async () => {
   return await databases.listDocuments(
     appwriteConfig.databaseId,
@@ -738,7 +834,8 @@ export const getForums = async () => {
   );
 };
 
-// Get messages for a specific forum
+
+// ============================== GET FORUM MESSAGES
 export const getForumMessages = async (forumId: string) => {
   return await databases.listDocuments(
     appwriteConfig.databaseId,
@@ -748,7 +845,8 @@ export const getForumMessages = async (forumId: string) => {
   ]);
 };
 
-// Post a message in a forum
+
+// ============================== POST MESSAGE
 export const postMessage = async (forumId: string, text: string, senderId: string, username: string) => {
   return await databases.createDocument(
     appwriteConfig.databaseId,
@@ -764,6 +862,8 @@ export const postMessage = async (forumId: string, text: string, senderId: strin
   );
 };
 
+
+// ============================== GET FORUM DETAILS
 export const getForumDetails = async (forumId: string) => {
   try {
     const response = await databases.getDocument(
@@ -778,6 +878,8 @@ export const getForumDetails = async (forumId: string) => {
   }
 };
 
+
+// ============================== GET USER'S FORUMS
 export const getMyForums = async (userId: string) => {
   try {
     return await databases.listDocuments(
@@ -794,6 +896,7 @@ export const getMyForums = async (userId: string) => {
 };
 
 
+// ============================== DELETE FORUM
 export const deleteForum = async (forumId: string) => {
   try {
     await databases.deleteDocument(
@@ -810,6 +913,7 @@ export const deleteForum = async (forumId: string) => {
 };
 
 
+// ============================== UPDATE FORUM
 export const updateForum = async (forumId: string, title: string, description: string) => {
   try {
     const updatedForum = await databases.updateDocument(
@@ -825,84 +929,3 @@ export const updateForum = async (forumId: string, title: string, description: s
     return null;
   }
 };
-
-
-export const followUser = async (currentUserId: string, targetUserId: string) => {
-  try {
-    const currentUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId);
-    const targetUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId);
-
-    const updatedFollowing = [...new Set([...currentUserDoc.following, targetUserId])];
-
-    const updatedFollowers = [...new Set([...targetUserDoc.followers, currentUserId])];
-
-    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId, {
-      following: updatedFollowing,
-    });
-
-    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId, {
-      followers: updatedFollowers,
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Error following user:", error);
-    return false;
-  }
-};
-
-
-export const unfollowUser = async (currentUserId: string, targetUserId: string) => {
-  try {
-    const currentUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId);
-    const targetUserDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId);
-
-    const updatedFollowing = currentUserDoc.following.filter((id: string) => id !== targetUserId);
-
-    const updatedFollowers = targetUserDoc.followers.filter((id: string) => id !== currentUserId);
-
-    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, currentUserId, {
-      following: updatedFollowing,
-    });
-
-    await databases.updateDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, targetUserId, {
-      followers: updatedFollowers,
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Error unfollowing user:", error);
-    return false;
-  }
-};
-
-
-
-export const getFollowStats = async (userId: string) => {
-  try {
-    const userDoc = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.userCollectionId, userId);
-    return {
-      followers: userDoc.followers.length,
-      following: userDoc.following.length,
-    };
-  } catch (error) {
-    console.error("Error fetching follow stats:", error);
-    return { followers: 0, following: 0 };
-  }
-};
-
-
-export const getSingleMessage = async (messageId: string) => {
-  try {
-    const message = await databases.getDocument(
-      appwriteConfig.databaseId, // Your database ID
-      appwriteConfig.text_messagesCollectionId, // Your messages collection ID
-      messageId // The ID of the message to fetch
-    );
-    return message;
-  } catch (error) {
-    console.error("Error fetching single message:", error);
-    throw error;
-  }
-};
-
