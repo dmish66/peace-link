@@ -109,7 +109,7 @@ const ConversationList = ({ onSelectConversation }: IConversationList) => {
   };
 
   return (
-    <div className="flex flex-col h-screen p-8 bg-gray-900 text-white">
+    <div className="flex flex-col h-full p-8 bg-gray-900 text-white">
       <div className="mb-8">
         <h3 className="text-2xl font-bold mb-4">Start a conversation</h3>
         <input

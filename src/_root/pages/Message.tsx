@@ -43,10 +43,10 @@ const Message = () => {
 
   return (
     <div className="flex h-screen w-full bg-gray-900">
-      <div className="w-1/4 border-r border-gray-700 p-6">
+      <div className="w-1/4 border-r border-gray-700 p-6 overflow-y-auto"> {/* Added overflow-y-auto */}
         <ConversationList onSelectConversation={setSelectedConversation} />
       </div>
-      <div className="w-3/4">
+      <div className="w-3/4 flex flex-col"> {/* Added flex-col */}
         {selectedConversation ? (
           <ChatWindow
             conversationId={selectedConversation}

@@ -13,7 +13,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
   const [newMessage, setNewMessage] = useState<string>("");
   const [translatedMessages, setTranslatedMessages] = useState<IMessage[] | null>(null);
 
-  // ✅ Optimistic UI Update on Send
+  // Optimistic UI Update on Send
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const tempId = Date.now().toString(); // Temporary ID for optimistic update
@@ -25,7 +25,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       senderId: user.id,
     };
 
-    setMessages((prev) => [...prev, tempMessage]); // ✅ Optimistic UI update
+    setMessages((prev) => [...prev, tempMessage]); // Optimistic UI update
     setNewMessage(""); // Clear input
 
     try {
@@ -47,7 +47,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
     }
   };
 
-  // ✅ Fetch Messages When Component Mounts
+  // Fetch Messages When Component Mounts
   useEffect(() => {
     const fetchMessages = async () => {
       const data: Models.Document[] = await getMessages(conversationId);
@@ -63,43 +63,44 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
     fetchMessages();
   }, [conversationId]);
 
-  // ✅ Real-Time Subscription Fix
   useEffect(() => {
     const unsubscribe = client.subscribe(
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents`,
       async (response) => {
-        if (response.events.includes(`databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents.*.create`)) {
-          const newMessageId = (response.payload as Models.Document).$id;
-
+        if (
+          response.events.includes(
+            `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents.*.create`
+          )
+        ) {
+          const payload = response.payload as Models.Document;
+          // Skip if the message is from the current user
+          if (payload.senderId === user.id) return;
+   
           try {
-            const fullMessage = await getSingleMessage(newMessageId);
-
+            const fullMessage = await getSingleMessage(payload.$id);
             const formattedMessage: IMessage = {
               $id: fullMessage.$id,
               text: fullMessage.text,
               createdAt: fullMessage.createdAt || new Date().toISOString(),
               senderId: fullMessage.senderId,
             };
-
-            // ✅ FUNCTIONAL UPDATE TO ENSURE MESSAGES UPDATE PROPERLY
             setMessages((prevMessages) => {
               if (!prevMessages.some((msg) => msg.$id === formattedMessage.$id)) {
-                return [...prevMessages, formattedMessage]; // ✅ Correctly updates messages
+                return [...prevMessages, formattedMessage];
               }
-              return prevMessages; // ✅ Prevents duplication
+              return prevMessages;
             });
-
           } catch (error) {
             console.error("Error fetching full message:", error);
           }
         }
       }
     );
+    return () => unsubscribe();
+  }, [conversationId, user.id]);
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [conversationId]); // ✅ Keeps subscription active without unnecessary re-renders
-
-  // ✅ Translation Function
+  
+  // Translation Function
   const handleTranslate = async () => {
     if (!user.nationality) return;
 
@@ -113,20 +114,20 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
+    <div className="flex flex-col h-full bg-gray-900 text-white">
       {/* Chat Header */}
       <ChatHeader profileImage={profileImage} username={username} />
 
       {/* Translate Button */}
       <button
         onClick={handleTranslate}
-        className="m-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        className="mx-4 mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
       >
         Translate Messages
       </button>
 
       {/* Messages Section */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-4 space-y-4">
         {(translatedMessages || messages).map((message) => (
           <div
             key={message.$id}
@@ -147,7 +148,7 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       </div>
 
       {/* Input Field */}
-      <form onSubmit={handleSendMessage} className="flex gap-4 p-4 border-t border-gray-700">
+      <form onSubmit={handleSendMessage} className="mt-auto p-4 border-t border-gray-700">
         <input
           type="text"
           value={newMessage}
