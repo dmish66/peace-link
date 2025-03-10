@@ -87,4 +87,5 @@ export type INavLink = {
     title: string;
     description: string;
     theme: string;
+    createdBy: string;
   }

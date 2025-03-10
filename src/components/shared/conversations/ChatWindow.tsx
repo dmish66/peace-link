@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // ✅ Import useRef
 import { getMessages, sendMessage, getSingleMessage } from "@/lib/appwrite/api";
 import { Models } from "appwrite";
 import { IMessage, IChatWindow } from "@/types";
@@ -12,8 +12,20 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState<string>("");
   const [translatedMessages, setTranslatedMessages] = useState<IMessage[] | null>(null);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null); // ✅ Create ref for auto-scroll
 
-  // Optimistic UI Update on Send
+  // ✅ Function to scroll to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // ✅ Scroll to bottom when messages update
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // ✅ Optimistic UI Update on Send
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const tempId = Date.now().toString(); // Temporary ID for optimistic update
@@ -25,8 +37,9 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       senderId: user.id,
     };
 
-    setMessages((prev) => [...prev, tempMessage]); // Optimistic UI update
+    setMessages((prev) => [...prev, tempMessage]); // ✅ Optimistic UI update
     setNewMessage(""); // Clear input
+    scrollToBottom(); // ✅ Scroll after sending
 
     try {
       const sentMessage = await sendMessage(conversationId, user.id, newMessage);
@@ -41,13 +54,14 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
       setMessages((prev) =>
         prev.map((msg) => (msg.$id === tempId ? newMessageFormatted : msg))
       );
+      scrollToBottom(); // ✅ Scroll when message is confirmed
     } catch (error) {
       console.error("Error sending message:", error);
       setMessages((prev) => prev.filter((msg) => msg.$id !== tempId));
     }
   };
 
-  // Fetch Messages When Component Mounts
+  // ✅ Fetch Messages When Component Mounts
   useEffect(() => {
     const fetchMessages = async () => {
       const data: Models.Document[] = await getMessages(conversationId);
@@ -58,11 +72,13 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
         senderId: doc.senderId,
       }));
       setMessages(mappedMessages);
+      scrollToBottom(); // ✅ Scroll after fetching messages
     };
 
     fetchMessages();
   }, [conversationId]);
 
+  // ✅ Real-Time Subscription for New Messages
   useEffect(() => {
     const unsubscribe = client.subscribe(
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.text_messagesCollectionId}.documents`,
@@ -73,9 +89,8 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
           )
         ) {
           const payload = response.payload as Models.Document;
-          // Skip if the message is from the current user
-          if (payload.senderId === user.id) return;
-   
+          if (payload.senderId === user.id) return; // ✅ Skip if message is from current user
+
           try {
             const fullMessage = await getSingleMessage(payload.$id);
             const formattedMessage: IMessage = {
@@ -84,23 +99,26 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
               createdAt: fullMessage.createdAt || new Date().toISOString(),
               senderId: fullMessage.senderId,
             };
+
             setMessages((prevMessages) => {
               if (!prevMessages.some((msg) => msg.$id === formattedMessage.$id)) {
                 return [...prevMessages, formattedMessage];
               }
               return prevMessages;
             });
+
+            scrollToBottom(); // ✅ Scroll when a new message is received
           } catch (error) {
             console.error("Error fetching full message:", error);
           }
         }
       }
     );
+
     return () => unsubscribe();
   }, [conversationId, user.id]);
 
-  
-  // Translation Function
+  // ✅ Translation Function
   const handleTranslate = async () => {
     if (!user.nationality) return;
 
@@ -145,10 +163,12 @@ const ChatWindow: React.FC<IChatWindow> = ({ conversationId, profileImage, usern
             </div>
           </div>
         ))}
+        {/* ✅ Invisible div to ensure scrolling works */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Field */}
-      <form onSubmit={handleSendMessage} className="mt-auto p-4 border-t border-gray-700">
+      <form onSubmit={handleSendMessage} className="flex gap-4 mt-auto p-4 border-t border-gray-700">
         <input
           type="text"
           value={newMessage}
