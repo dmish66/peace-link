@@ -12,8 +12,8 @@ FormMessage } from "@/components/ui/form";
 import { PostValidation } from "@/lib/validation";
 import { useToast } from "@/components/ui/use-toast";
 import { useUserContext } from "@/context/AuthContext";
-import FileUploader from "@/components/shared/FileUploader";
-import Loader from "@/components/shared/Loader";
+import FileUploader from "@/components/shared/posts/FileUploader";
+import Loader from "@/components/shared/utils/Loader";
 import { useCreatePost, useUpdatePost } from "@/lib/react-query/queries";
 
 type PostFormProps = {

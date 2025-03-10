@@ -1,7 +1,7 @@
 import { Models } from "appwrite";
-import Loader from "@/components/shared/Loader";
-import PostCard from "@/components/shared/PostCard";
-import UserCard from "@/components/shared/UserCard";
+import Loader from "@/components/shared/utils/Loader";
+import PostCard from "@/components/shared/posts/PostCard";
+import UserCard from "@/components/shared/profile/UserCard";
 import { useGetRecentPosts, useGetUsers } from "@/lib/react-query/queries";
 import { useUserContext } from "@/context/AuthContext";
 

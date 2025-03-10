@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import ConversationList from "@/components/shared/ConversationList";
-import ChatWindow from "@/components/shared/ChatWindow";
+import ConversationList from "@/components/shared/conversations/ConversationList";
+import ChatWindow from "@/components/shared/conversations/ChatWindow";
 import { getOtherUserDetails } from "@/lib/appwrite/api"; // Updated API call
 import { useUserContext } from "@/context/AuthContext";
 

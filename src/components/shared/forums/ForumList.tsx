@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getForums } from "@/lib/appwrite/api";
-import ForumItem from "./ForumItem";
+import ForumItem from "../ForumItem";
 
 const ForumList = () => {
   const [forums, setForums] = useState<any[]>([]);
