@@ -5,8 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUserContext } from "@/context/AuthContext";
 import { useGetCurrentUser } from "@/lib/react-query/queries";
 import { followUser, unfollowUser } from "@/lib/appwrite/api";
-import { Button } from "../ui/button";
-import Loader from "../shared/Loader";
+import { Button } from "../../ui/button";
+import Loader from "../utils/Loader";
 
 type UserCardProps = {
   user: Models.Document;

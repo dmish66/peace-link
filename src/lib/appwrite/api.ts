@@ -778,6 +778,53 @@ export const getForumDetails = async (forumId: string) => {
   }
 };
 
+export const getMyForums = async (userId: string) => {
+  try {
+    return await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.forumsCollectionId,
+      [
+        Query.equal("createdBy", userId)
+      ]
+    );
+  } catch (error) {
+    console.error("Error fetching user-created forums:", error);
+    return { documents: [] };
+  }
+};
+
+
+export const deleteForum = async (forumId: string) => {
+  try {
+    await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.forumsCollectionId,
+      forumId
+    );
+    console.log("Forum deleted:", forumId);
+    return true;
+  } catch (error) {
+    console.error("Error deleting forum:", error);
+    return false;
+  }
+};
+
+
+export const updateForum = async (forumId: string, title: string, description: string) => {
+  try {
+    const updatedForum = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.forumsCollectionId,
+      forumId,
+      { title, description }
+    );
+    console.log("Forum updated:", updatedForum);
+    return updatedForum;
+  } catch (error) {
+    console.error("Error updating forum:", error);
+    return null;
+  }
+};
 
 
 export const followUser = async (currentUserId: string, targetUserId: string) => {

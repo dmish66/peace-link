@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getForumMessages, postMessage, getForumDetails } from "@/lib/appwrite/api";
 import { useUserContext } from "@/context/AuthContext";
+import { client, appwriteConfig } from "@/lib/appwrite/config";
+import { Models } from "appwrite";
 
 const ForumChat = () => {
   const { forumId } = useParams();
@@ -37,16 +39,73 @@ const ForumChat = () => {
     fetchMessages();
   }, [forumId]);
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+  useEffect(() => {
+    if (!forumId) return;
+   
+    const unsubscribe = client.subscribe(
+      `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.forums_messagesCollectionId}.documents`,
+      async (response) => {
+        if (
+          response.events.includes(
+            `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.forums_messagesCollectionId}.documents.*.create`
+          )
+        ) {
+          const payload = response.payload as Models.Document;
+          // Skip if the message is from the current user
+          if (payload.senderId === user.id) return;
+   
+          const formattedMessage = {
+            $id: payload.$id,
+            text: payload.text,
+            createdAt: payload.createdAt,
+            senderId: payload.senderId,
+            username: payload.username,
+          };
+          setMessages((prev) => {
+            if (!prev.some((msg) => msg.$id === formattedMessage.$id)) {
+              return [...prev, formattedMessage];
+            }
+            return prev;
+          });
+        }
+      }
+    );
+    return () => unsubscribe();
+  }, [forumId, user.id]);
 
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !forumId) return;
+   
+    // Optimistic update
+    const tempId = Date.now().toString();
+    const tempMessage = {
+      $id: tempId,
+      text: newMessage,
+      createdAt: new Date().toISOString(),
+      senderId: user.id,
+      username: user.username,
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+    setNewMessage("");
+   
     try {
-      await postMessage(forumId!, newMessage, user.id, user.username);
-      setNewMessage("");
-      const data = await getForumMessages(forumId!);
-      setMessages(data.documents);
+      // Send message and get the created document
+      const sentMessage = await postMessage(forumId, newMessage, user.id, user.username);
+      // Replace optimistic message with actual data
+      const newMessageFormatted = {
+        $id: sentMessage.$id,
+        text: sentMessage.text,
+        createdAt: sentMessage.createdAt,
+        senderId: sentMessage.senderId,
+        username: sentMessage.username,
+      };
+      setMessages((prev) =>
+        prev.map((msg) => (msg.$id === tempId ? newMessageFormatted : msg))
+      );
     } catch (error) {
       console.error("Error posting message:", error);
+      // Rollback optimistic update on error
+      setMessages((prev) => prev.filter((msg) => msg.$id !== tempId));
     }
   };
 

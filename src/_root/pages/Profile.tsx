@@ -13,8 +13,8 @@ import { LikedPosts } from "@/_root/pages";
 import { useUserContext } from "@/context/AuthContext";
 import { IUser } from "@/types/index"
 import { useGetUserById, useGetCurrentUser } from "@/lib/react-query/queries";
-import Loader from "@/components/shared/Loader";
-import GridPostList from "@/components/shared/GridPostList";
+import Loader from "@/components/shared/utils/Loader";
+import GridPostList from "@/components/shared/utils/GridPostList";
 import { createConversation } from "@/lib/appwrite/api";
 import { followUser, unfollowUser } from "@/lib/appwrite/api";
 import { useState, useEffect } from "react";

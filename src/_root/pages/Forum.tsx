@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import ForumList from "@/components/shared/ForumList";
+import ForumList from "@/components/shared/forums/ForumList";
 
 const Forum = () => {
   const navigate = useNavigate();

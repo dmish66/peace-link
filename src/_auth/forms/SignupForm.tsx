@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Loader from "@/components/shared/Loader";
+import Loader from "@/components/shared/utils/Loader";
 import { useToast } from "@/components/ui/use-toast";
 
 import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queries";

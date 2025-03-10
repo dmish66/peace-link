@@ -1,5 +1,5 @@
-import GridPostList from "@/components/shared/GridPostList";
-import Loader from "@/components/shared/Loader";
+import GridPostList from "@/components/shared/utils/GridPostList";
+import Loader from "@/components/shared/utils/Loader";
 import { useGetUserById } from "@/lib/react-query/queries";
 
 const LikedPosts = ({ userId }: { userId: string }) => {

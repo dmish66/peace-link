@@ -1,4 +1,4 @@
-import ForumForm from "@/components/forms/ForumForm";
+import ForumForm from "@/components/shared/forums/ForumForm";
 
 const CreateForum = () => {
   return (

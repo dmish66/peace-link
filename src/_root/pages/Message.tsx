@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import ConversationList from "@/components/shared/ConversationList";
-import ChatWindow from "@/components/shared/ChatWindow";
+import ConversationList from "@/components/shared/conversations/ConversationList";
+import ChatWindow from "@/components/shared/conversations/ChatWindow";
 import { getOtherUserDetails } from "@/lib/appwrite/api"; // Updated API call
 import { useUserContext } from "@/context/AuthContext";
 
@@ -43,10 +43,10 @@ const Message = () => {
 
   return (
     <div className="flex h-screen w-full bg-gray-900">
-      <div className="w-1/4 border-r border-gray-700 p-6">
+      <div className="w-1/4 border-r border-gray-700 p-6 overflow-y-auto"> {/* Added overflow-y-auto */}
         <ConversationList onSelectConversation={setSelectedConversation} />
       </div>
-      <div className="w-3/4">
+      <div className="w-3/4 flex flex-col"> {/* Added flex-col */}
         {selectedConversation ? (
           <ChatWindow
             conversationId={selectedConversation}
