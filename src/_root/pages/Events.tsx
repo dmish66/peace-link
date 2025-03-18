@@ -49,7 +49,7 @@ const EventsPage = () => {
   return (
     <div className="h-screen w-full bg-gray-900 text-white flex flex-col">
       {/* Header */}
-      <div className="max-w-4xl mx-auto w-full py-4 px-6">
+      <div className="max-w-5xl mx-auto w-full py-4 px-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
           <h1 className="text-3xl font-bold">{showMyEvents ? "My Events" : "All Events"}</h1>
           <div className="flex gap-4">
@@ -96,7 +96,7 @@ const EventsPage = () => {
       </div>
 
       {/* Events List - Scrollable */}
-      <div className="flex-1 overflow-y-auto px-6 pb-16">
+      <div className="flex-1 overflow-y-auto px-6 pb-16 custom-scrollbar">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {events.length > 0 ? (
             events.map((event) => (
