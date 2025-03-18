@@ -16,8 +16,8 @@ const ForumList = () => {
     const fetchForums = async () => {
       try {
         const data = showMyForums
-          ? await getMyForums(user.id) // ✅ Fetch only user's forums
-          : await getForums(); // Fetch all forums
+          ? await getMyForums(user.id)
+          : await getForums();
 
         setForums(data.documents);
         setFilteredForums(data.documents);
@@ -27,7 +27,7 @@ const ForumList = () => {
     };
 
     fetchForums();
-  }, [showMyForums, user.id]);
+  }, [showMyForums, user?.id]);
 
   // Apply search & theme filters
   useEffect(() => {
@@ -105,6 +105,7 @@ const ForumList = () => {
                 description={forum.description}
                 theme={forum.theme}
                 createdBy={forum.createdBy}
+                showActions={showMyForums} // ✅ Pass showMyForums to show/hide buttons
               />
             ))
           ) : (

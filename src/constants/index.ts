@@ -6,8 +6,8 @@ export const sidebarLinks = [
     },
     {
       imgURL: "/assets/icons/wallpaper.svg",
-      route: "/explore",
-      label: "Explore",
+      route: "/events",
+      label: "Events",
     },
     {
       imgURL: "/assets/icons/people.svg",
@@ -34,8 +34,8 @@ export const sidebarLinks = [
     },
     {
       imgURL: "/assets/icons/wallpaper.svg",
-      route: "/explore",
-      label: "Explore",
+      route: "/events",
+      label: "Events",
     },
     {
       imgURL: "/assets/icons/chat.svg",

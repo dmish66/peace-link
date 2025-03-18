@@ -1,12 +1,10 @@
 import { IForumItem } from "@/types";
 import { useNavigate } from "react-router-dom";
-import { deleteForum, updateForum } from "@/lib/appwrite/api"; // ✅ Import API functions
-import { useUserContext } from "@/context/AuthContext";
+import { deleteForum, updateForum } from "@/lib/appwrite/api";
 import { useState } from "react";
 
-const ForumItem = ({ id, title, description, createdBy }: IForumItem) => {
+const ForumItem = ({ id, title, description, showActions }: IForumItem & { showActions: boolean }) => {
   const navigate = useNavigate();
-  const { user } = useUserContext();
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
   const [newDescription, setNewDescription] = useState(description);
@@ -32,7 +30,6 @@ const ForumItem = ({ id, title, description, createdBy }: IForumItem) => {
   return (
     <div className="p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 hover:shadow-lg transition-all transform">
       {isEditing ? (
-        // ✅ Edit Mode (Title & Description Inputs)
         <div>
           <input
             type="text"
@@ -62,7 +59,6 @@ const ForumItem = ({ id, title, description, createdBy }: IForumItem) => {
           </div>
         </div>
       ) : (
-        // ✅ Normal View Mode
         <div onClick={() => navigate(`/forum/${id}`)} className="cursor-pointer">
           <h2 className="text-2xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
             {title}
@@ -71,19 +67,13 @@ const ForumItem = ({ id, title, description, createdBy }: IForumItem) => {
         </div>
       )}
 
-      {/* ✅ Show Buttons Only If the Forum Belongs to the User */}
-      {user.id === createdBy && (
+      {/* ✅ Show Edit/Delete buttons ONLY in "My Forums" tab */}
+      {showActions && (
         <div className="flex justify-end gap-2 mt-4">
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition"
-          >
+          <button onClick={() => setIsEditing(!isEditing)} className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
             {isEditing ? "Cancel" : "Edit"}
           </button>
-          <button
-            onClick={handleDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
+          <button onClick={handleDelete} className="px-4 py-2 bg-red text-white rounded-lg hover:bg-red-700 transition">
             Delete
           </button>
         </div>

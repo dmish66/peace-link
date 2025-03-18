@@ -929,3 +929,180 @@ export const updateForum = async (forumId: string, title: string, description: s
     return null;
   }
 };
+
+
+
+
+export const createEvent = async (
+  title: string,
+  description: string,
+  country: string,
+  date: string,
+  imageFile: File,
+  location: string,
+  organizer: string
+) => {
+  if (!title || !country || !date) {
+    throw new Error("Required fields are missing");
+  }
+
+  // Upload image to storage
+  const image = await storage.createFile(appwriteConfig.storageId, ID.unique(), imageFile);
+  
+  return await databases.createDocument(appwriteConfig.databaseId, appwriteConfig.eventsCollectionId, ID.unique(), {
+    title,
+    description,
+    country,
+    date,
+    image: image.$id,
+    location,
+    organizer,
+    createdAt: new Date().toISOString()
+  });
+};
+
+// Get events by country
+export const listEventsByCountry = async (country: string) => {
+  try {
+    const queries = [];
+    if (country) {
+      queries.push(Query.equal('country', country)); // Use Query builder
+    }
+
+    const response = await databases.listDocuments(
+      appwriteConfig.databaseId, 
+      appwriteConfig.eventsCollectionId, 
+      queries
+    );
+    return response;
+  } catch (error) {
+    console.error("API Error:", error);
+    return { documents: [] };
+  }
+};
+
+
+// Get all countries with events
+export const getEventCountries = async () => {
+  const result = await databases.listDocuments(
+    appwriteConfig.databaseId, 
+    appwriteConfig.eventsCollectionId
+  );
+  
+  return [
+    ...new Set(
+      result.documents
+        .map(event => event.country)
+        .filter(country => country)
+    )
+  ].sort();
+};
+
+// Get event image URL
+export const getEventImageUrl = (fileId: string) => {
+  return storage.getFilePreview(appwriteConfig.storageId, fileId);
+};
+
+export const getEventById = async (eventId: string) => {
+  return databases.getDocument(appwriteConfig.databaseId, appwriteConfig.eventsCollectionId, eventId);
+};
+
+export const attendEvent = async (eventId: string, userId: string) => {
+  try {
+    const event = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.eventsCollectionId, eventId);
+    let attendees = event.attendees || [];
+
+    // Avoid duplicate attendance
+    if (!attendees.includes(userId)) {
+      attendees.push(userId);
+    }
+
+    const updatedEvent = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.eventsCollectionId,
+      eventId,
+      { attendees }
+    );
+
+    console.log("Updated event:", updatedEvent);
+    return updatedEvent;
+  } catch (error) {
+    console.error("Error updating attendees:", error);
+    throw error;
+  }
+};
+
+export const listMyEvents = async (userId: string) => {
+  try {
+    const response = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.eventsCollectionId,
+      [Query.equal("organizer", [userId])]
+    );
+    return response;
+  } catch (error) {
+    console.error("Error fetching user events:", error);
+    return { documents: [] };
+  }
+};
+
+export const deleteEvent = async (eventId: string) => {
+  try {
+    await databases.deleteDocument(appwriteConfig.databaseId, appwriteConfig.eventsCollectionId, eventId);
+    console.log("Event deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    throw error;
+  }
+};
+
+export const updateEvent = async (eventId: string, data: any) => {
+  let imageId = data.image;
+  
+  if (data.image instanceof File) {
+    const newImage = await storage.createFile(
+      appwriteConfig.storageId,
+      ID.unique(),
+      data.image
+    );
+    imageId = newImage.$id;
+  }
+
+  return databases.updateDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.eventsCollectionId,
+    eventId,
+    {
+      ...data,
+      image: imageId,
+      date: new Date(data.date).toISOString()
+    }
+  );
+};
+
+export const unattendEvent = async (eventId: string, userId: string) => {
+  try {
+    // Fetch the current event
+    const event = await databases.getDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.eventsCollectionId,
+      eventId
+    );
+
+    // Remove the user from the attendees list
+    const updatedAttendees = event.attendees.filter((id: string) => id !== userId);
+
+    // Update the event with the new attendees list
+    const response = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.eventsCollectionId,
+      eventId,
+      { attendees: updatedAttendees }
+    );
+
+    return response;
+  } catch (error) {
+    console.error("Error unattending event:", error);
+    return null;
+  }
+};
