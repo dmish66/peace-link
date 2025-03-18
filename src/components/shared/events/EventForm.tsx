@@ -151,10 +151,29 @@ const EventForm = () => {
                   {...field}
                   className="w-full p-3 bg-gray-800 rounded-xl border border-gray-700 focus:ring-2 focus:ring-blue-500/50"
                 >
-                  <option value="" disabled>Select Country</option>
-                  <option value="United States">United States</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="Germany">Germany</option>
+                <option value="" disabled>Select Country</option> 
+                <option value="United States">United States</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Germany">Germany</option>
+                <option value="France">France</option>
+                <option value="Spain">Spain</option>
+                <option value="Italy">Italy</option>
+                <option value="Netherlands">Netherlands</option>
+                <option value="Poland">Poland</option>
+                <option value="Greece">Greece</option>
+                <option value="Portugal">Portugal</option>
+                <option value="Sweden">Sweden</option>
+                <option value="Denmark">Denmark</option>
+                <option value="Norway">Norway</option>
+                <option value="Finland">Finland</option>
+                <option value="Japan">Japan</option>
+                <option value="China">China</option>
+                <option value="Russia">Russia</option>
+                <option value="Brazil">Brazil</option>
+                <option value="Mexico">Mexico</option>
+                <option value="Canada">Canada</option>
+                <option value="India">India</option>
+                <option value="Bulgaria">Bulgaria</option>
                   {/* Add more countries with full names */}
                 </select>
               </FormControl>

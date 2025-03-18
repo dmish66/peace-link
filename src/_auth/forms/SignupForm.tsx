@@ -13,7 +13,8 @@ import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/querie
 import { useUserContext } from "@/context/AuthContext";
 
 // Nationalities List
-const nationalities = ["United Kingdom", "Bulgaria", "Germany", "Russia"];
+const nationalities = ["United Kingdom", "Bulgaria", "Germany", "Russia", "France", "Spain", "Italy", "Netherlands", "Poland", "Greece", "Portugal", "Sweden", "Denmark", "Norway", "Finland", "Japan", "China", "Brazil", "Mexico", "United States", "Canada", "India"];
+
 
 // Signup Form Validation Schema
 export const SignupValidation = z.object({
