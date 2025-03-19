@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getForumMessages, postMessage, getForumDetails } from "@/lib/appwrite/api";
+import { getForumMessages, postMessage, getForumDetails, getUserById } from "@/lib/appwrite/api";
 import { useUserContext } from "@/context/AuthContext";
 import { client, appwriteConfig } from "@/lib/appwrite/config";
 import { Models } from "appwrite";
@@ -11,27 +11,27 @@ const ForumChat = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const { user } = useUserContext();
+  const [userImages, setUserImages] = useState<{ [key: string]: string }>({}); // ✅ Cache user images
 
   useEffect(() => {
+    if (!forumId) return;
+
     const fetchForumDetails = async () => {
-      if (forumId) {
-        try {
-          const data = await getForumDetails(forumId);
-          setForumDetails({ title: data.title, description: data.description });
-        } catch (error) {
-          console.error("Error fetching forum details:", error);
-        }
+      try {
+        const data = await getForumDetails(forumId);
+        setForumDetails({ title: data.title, description: data.description });
+      } catch (error) {
+        console.error("Error fetching forum details:", error);
       }
     };
 
     const fetchMessages = async () => {
-      if (forumId) {
-        try {
-          const data = await getForumMessages(forumId);
-          setMessages(data.documents);
-        } catch (error) {
-          console.error("Error fetching messages:", error);
-        }
+      try {
+        const data = await getForumMessages(forumId);
+        console.log("Fetched messages:", data.documents); // 🔹 Debug log
+        setMessages(data.documents);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
       }
     };
 
@@ -41,42 +41,72 @@ const ForumChat = () => {
 
   useEffect(() => {
     if (!forumId) return;
-   
+
+    console.log("Subscribing to messages...");
+
     const unsubscribe = client.subscribe(
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.forums_messagesCollectionId}.documents`,
       async (response) => {
-        if (
-          response.events.includes(
-            `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.forums_messagesCollectionId}.documents.*.create`
-          )
-        ) {
+        console.log("Subscription event:", response);
+
+        if (response.events.includes("databases.*.collections.*.documents.*.create")) {
           const payload = response.payload as Models.Document;
-          // Skip if the message is from the current user
-          if (payload.senderId === user.id) return;
-   
-          const formattedMessage = {
+
+          if (!payload) return;
+
+          const newMessage = {
             $id: payload.$id,
             text: payload.text,
             createdAt: payload.createdAt,
             senderId: payload.senderId,
             username: payload.username,
           };
+
+          console.log("New message received:", newMessage);
+
           setMessages((prev) => {
-            if (!prev.some((msg) => msg.$id === formattedMessage.$id)) {
-              return [...prev, formattedMessage];
+            if (!prev.some((msg) => msg.$id === newMessage.$id)) {
+              return [...prev, newMessage];
             }
             return prev;
           });
         }
       }
     );
+
     return () => unsubscribe();
-  }, [forumId, user.id]);
+  }, [forumId]);
+
+  // ✅ Fetch user image when needed
+  const fetchUserImage = async (userId: string) => {
+    if (userImages[userId]) return; // Already cached
+
+    try {
+      const userData = await getUserById(userId);
+
+      if (!userData) {
+        console.warn(`User data not found for ID: ${userId}`);
+        return;
+      }
+
+      setUserImages((prev) => ({
+        ...prev,
+        [userId]: userData.imageUrl || "/default-avatar.png",
+      }));
+    } catch (error) {
+      console.error("Error fetching user image:", error);
+    }
+  };
+
+  useEffect(() => {
+    messages.forEach((msg) => fetchUserImage(msg.senderId));
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !forumId) return;
-   
-    // Optimistic update
+
+    const userImage = user.imageUrl || "/default-avatar.png"; // ✅ Ensure `imageUrl` is passed
+
     const tempId = Date.now().toString();
     const tempMessage = {
       $id: tempId,
@@ -84,27 +114,20 @@ const ForumChat = () => {
       createdAt: new Date().toISOString(),
       senderId: user.id,
       username: user.username,
+      imageUrl: userImage, // ✅ Now includes `imageUrl`
     };
+
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
-   
+
     try {
-      // Send message and get the created document
-      const sentMessage = await postMessage(forumId, newMessage, user.id, user.username);
-      // Replace optimistic message with actual data
-      const newMessageFormatted = {
-        $id: sentMessage.$id,
-        text: sentMessage.text,
-        createdAt: sentMessage.createdAt,
-        senderId: sentMessage.senderId,
-        username: sentMessage.username,
-      };
+      const sentMessage = await postMessage(forumId, newMessage, user.id, user.username, userImage);
+      console.log("Sent message:", sentMessage);
       setMessages((prev) =>
-        prev.map((msg) => (msg.$id === tempId ? newMessageFormatted : msg))
+        prev.map((msg) => (msg.$id === tempId ? sentMessage : msg))
       );
     } catch (error) {
       console.error("Error posting message:", error);
-      // Rollback optimistic update on error
       setMessages((prev) => prev.filter((msg) => msg.$id !== tempId));
     }
   };
@@ -122,21 +145,32 @@ const ForumChat = () => {
         <p>Loading forum details...</p>
       )}
 
-      <div className="space-y-4 max-w-4xl mx-auto">
-        {messages.map((message) => (
-          <div
-            key={message.$id}
-            className="p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 transition-all"
-          >
-            <p className="text-gray-300 mb-2">{message.text}</p>
-            <span className="text-sm text-gray-500">
-              Posted by {message.username} at{" "}
-              {new Date(message.createdAt).toLocaleString()}
-            </span>
-          </div>
-        ))}
+      {/* Messages List */}
+      <div className="space-y-4 max-w-4xl mx-auto overflow-y-auto max-h-[60vh] custom-scrollbar">
+        {messages.map((message) => {
+          const isCurrentUser = message.senderId === user.id;
+          return (
+            <div key={message.$id} className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+              <div className={`flex items-start gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}>
+                <img
+                  src={userImages[message.senderId] || "/default-avatar.png"}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full object-cover"
+                  onError={(e) => (e.currentTarget.src = "/default-avatar.png")}
+                />
+                <div className={`p-4 rounded-xl ${isCurrentUser ? "bg-blue-600 ml-2" : "bg-gray-800 mr-2"}`}>
+                  <p className="text-gray-300 mb-2">{message.text}</p>
+                  <span className="text-sm text-gray-300">
+                    {message.username} • {new Date(message.createdAt).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
+      {/* Message Input */}
       <div className="mt-8 max-w-4xl mx-auto">
         <textarea
           value={newMessage}

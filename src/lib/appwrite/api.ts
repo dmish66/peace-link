@@ -847,7 +847,7 @@ export const getForumMessages = async (forumId: string) => {
 
 
 // ============================== POST MESSAGE
-export const postMessage = async (forumId: string, text: string, senderId: string, username: string) => {
+export const postMessage = async (forumId: string, text: string, senderId: string, username: string, imageUrl: string) => {
   return await databases.createDocument(
     appwriteConfig.databaseId,
     appwriteConfig.forums_messagesCollectionId,
@@ -857,6 +857,7 @@ export const postMessage = async (forumId: string, text: string, senderId: strin
       text,
       senderId,
       username,
+      imageUrl,
       createdAt: new Date().toISOString(),
     }
   );
