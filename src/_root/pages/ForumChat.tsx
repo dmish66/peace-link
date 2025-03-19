@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getForumMessages, postMessage, getForumDetails, getUserById } from "@/lib/appwrite/api";
 import { useUserContext } from "@/context/AuthContext";
@@ -11,7 +11,16 @@ const ForumChat = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const { user } = useUserContext();
-  const [userImages, setUserImages] = useState<{ [key: string]: string }>({}); // ✅ Cache user images
+  const [userImages, setUserImages] = useState<{ [key: string]: string }>({});
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = 
+        messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (!forumId) return;
@@ -40,20 +49,22 @@ const ForumChat = () => {
   }, [forumId]);
 
   useEffect(() => {
-    if (!forumId) return;
-
+    if (!forumId || !user) return;
+  
     console.log("Subscribing to messages...");
-
+  
     const unsubscribe = client.subscribe(
       `databases.${appwriteConfig.databaseId}.collections.${appwriteConfig.forums_messagesCollectionId}.documents`,
       async (response) => {
         console.log("Subscription event:", response);
-
+  
         if (response.events.includes("databases.*.collections.*.documents.*.create")) {
           const payload = response.payload as Models.Document;
-
           if (!payload) return;
-
+  
+          // Skip messages sent by current user
+          if (payload.senderId === user.id) return;
+  
           const newMessage = {
             $id: payload.$id,
             text: payload.text,
@@ -61,9 +72,9 @@ const ForumChat = () => {
             senderId: payload.senderId,
             username: payload.username,
           };
-
+  
           console.log("New message received:", newMessage);
-
+  
           setMessages((prev) => {
             if (!prev.some((msg) => msg.$id === newMessage.$id)) {
               return [...prev, newMessage];
@@ -73,9 +84,9 @@ const ForumChat = () => {
         }
       }
     );
-
+  
     return () => unsubscribe();
-  }, [forumId]);
+  }, [forumId, user]);
 
   // ✅ Fetch user image when needed
   const fetchUserImage = async (userId: string) => {
@@ -104,9 +115,7 @@ const ForumChat = () => {
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !forumId) return;
-
-    const userImage = user.imageUrl || "/default-avatar.png"; // ✅ Ensure `imageUrl` is passed
-
+  
     const tempId = Date.now().toString();
     const tempMessage = {
       $id: tempId,
@@ -114,15 +123,15 @@ const ForumChat = () => {
       createdAt: new Date().toISOString(),
       senderId: user.id,
       username: user.username,
-      imageUrl: userImage, // ✅ Now includes `imageUrl`
+      // Remove imageUrl from here
     };
-
+  
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
-
+  
     try {
-      const sentMessage = await postMessage(forumId, newMessage, user.id, user.username, userImage);
-      console.log("Sent message:", sentMessage);
+      // Update postMessage parameters to remove imageUrl
+      const sentMessage = await postMessage(forumId, newMessage, user.id, user.username);
       setMessages((prev) =>
         prev.map((msg) => (msg.$id === tempId ? sentMessage : msg))
       );
@@ -146,7 +155,9 @@ const ForumChat = () => {
       )}
 
       {/* Messages List */}
-      <div className="space-y-4 max-w-4xl mx-auto overflow-y-auto max-h-[60vh] custom-scrollbar">
+      <div
+      ref={messagesContainerRef}
+      className="space-y-4 max-w-4xl mx-auto overflow-y-auto max-h-[60vh] custom-scrollbar">
         {messages.map((message) => {
           const isCurrentUser = message.senderId === user.id;
           return (
@@ -168,6 +179,7 @@ const ForumChat = () => {
             </div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}
