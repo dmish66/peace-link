@@ -862,7 +862,8 @@ export async function postMessage(
         forumId,
         text,
         senderId,
-        username
+        username,
+        createdAt: new Date().toISOString()
       }
     );
   } catch (error) {
